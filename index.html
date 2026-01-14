@@ -3,16 +3,29 @@
 <head>
   <meta charset="UTF-8" />
   <title>Poké-Joho</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Styles -->
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+
   <h1>Poké-Joho</h1>
 
-  <input id="pokemonInput" placeholder="Enter Pokémon name" />
-  <button id="searchBtn">Search</button>
+  <!-- Search -->
+  <div class="search">
+    <input
+      id="pokemonInput"
+      type="text"
+      placeholder="Enter Pokémon name"
+    />
+    <button id="searchBtn">Search</button>
+  </div>
 
-  <div id="pokemonResult"></div>
+  <!-- Result -->
+  <div id="result"></div>
 
+  <!-- Script (must be at bottom) -->
   <script src="script.js"></script>
 </body>
 </html>

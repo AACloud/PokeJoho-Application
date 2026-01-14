@@ -1,3 +1,4 @@
+// ===== Pokémon name aliases (forms PokéAPI requires) =====
 const pokemonAliases = {
   giratina: "giratina-altered",
   tornadus: "tornadus-incarnate",
@@ -14,171 +15,206 @@ const pokemonAliases = {
   zygarde: "zygarde-50",
 };
 
-const button = document.getElementById("searchBtn");
-const input = document.getElementById("pokemonInput");
-const result = document.getElementById("pokemonResult");
+// ===== Type colors =====
+const typeColors = {
+  normal: "#A8A77A",
+  fire: "#EE8130",
+  water: "#6390F0",
+  electric: "#F7D02C",
+  grass: "#7AC74C",
+  ice: "#96D9D6",
+  fighting: "#C22E28",
+  poison: "#A33EA1",
+  ground: "#E2BF65",
+  flying: "#A98FF3",
+  psychic: "#F95587",
+  bug: "#A6B91A",
+  rock: "#B6A136",
+  ghost: "#735797",
+  dragon: "#6F35FC",
+  dark: "#705746",
+  steel: "#B7B7CE",
+  fairy: "#D685AD",
+};
 
+// ===== DOM =====
+const input = document.getElementById("pokemonInput");
+const result = document.getElementById("result");
+const searchBtn = document.getElementById("searchBtn");
+
+// ===== Events =====
+searchBtn.addEventListener("click", fetchPokemon);
+input.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") fetchPokemon();
+});
+
+// ===== Helpers =====
+function statColor(value) {
+  // map 0–255 → hue (red → blue)
+  const max = 255;
+  const ratio = Math.min(value / max, 1);
+  const hue = 240 * ratio; // 0=red, 240=blue
+  return `hsl(${hue}, 80%, 55%)`;
+}
+
+// ===== Main =====
 async function fetchPokemon() {
   let name = input.value.toLowerCase().trim();
-  name = pokemonAliases[name] || name;
-
   if (!name) return;
 
+  name = pokemonAliases[name] || name;
   result.innerHTML = "<p>Loading...</p>";
 
   try {
     const res = await fetch(`https://pokeapi.co/api/v2/pokemon/${name}`);
-    if (!res.ok) throw new Error("Pokémon not found");
+    if (!res.ok) throw new Error("Not found");
 
     const data = await res.json();
 
-    const pokedexNumber = data.id; // Pokedex Number
+    // Artwork (official → fallback)
+    const artwork =
+      data.sprites.other?.["official-artwork"]?.front_default ||
+      data.sprites.front_default;
 
-    // Species
-    const species = data.species.name
-      .replace("-", " ")
-      .replace(/\b\w/g, (c) => c.toUpperCase());
-
+    // Height / Weight (UNCHANGED logic)
     const heightMeters = data.height / 10;
+    const feet = Math.floor(heightMeters * 3.28084);
+    const inches = Math.round((heightMeters * 3.28084 - feet) * 12);
+
     const weightKg = data.weight / 10;
-
-    // Height in feet/inches
-    const totalInches = heightMeters * 39.3701;
-    const feet = Math.floor(totalInches / 12);
-    const inches = Math.round(totalInches % 12);
-
-    // Weight in pounds
     const weightLbs = (weightKg * 2.20462).toFixed(1);
 
-    // Pokemon Type
-    const types = data.types.map((t) => t.type.name.toUpperCase()).join(" / ");
+    // Types (badges)
+    const typesHtml = data.types
+      .map((t) => {
+        const type = t.type.name;
+        return `
+          <span
+            class="type-badge"
+            style="background-color: ${typeColors[type]}"
+          >
+            ${type.toUpperCase()}
+          </span>
+        `;
+      })
+      .join("");
 
-    // Ability
-    const abilities = data.abilities
-      .map((a) =>
-        a.ability.name
+    // Abilities (hidden labeled)
+    const abilitiesHtml = data.abilities
+      .map((a) => {
+        const name = a.ability.name
           .replace("-", " ")
-          .replace(/\b\w/g, (c) => c.toUpperCase())
-      )
+          .replace(/\b\w/g, (c) => c.toUpperCase());
+
+        return a.is_hidden
+          ? `${name} <span class="hidden-ability">(Hidden)</span>`
+          : name;
+      })
       .join(", ");
 
-    //stats
-
+    // Stats object
     const stats = {
-      hp: data.stats.find((s) => s.stat.name === "hp").base_stat,
-      attack: data.stats.find((s) => s.stat.name === "attack").base_stat,
-      defense: data.stats.find((s) => s.stat.name === "defense").base_stat,
-      "special-attack": data.stats.find((s) => s.stat.name === "special-attack")
-        .base_stat,
-      "special-defense": data.stats.find(
-        (s) => s.stat.name === "special-defense"
-      ).base_stat,
-      speed: data.stats.find((s) => s.stat.name === "speed").base_stat,
+      HP: data.stats[0].base_stat,
+      Attack: data.stats[1].base_stat,
+      Defense: data.stats[2].base_stat,
+      "Sp. Atk": data.stats[3].base_stat,
+      "Sp. Def": data.stats[4].base_stat,
+      Speed: data.stats[5].base_stat,
     };
+    const statTotal = Object.values(stats).reduce((sum, v) => sum + v, 0);
 
-    const maxStat = 200;
+    // Stats HTML
+    const statsHtml = Object.entries(stats)
+      .map(([label, value]) => {
+        return `
+          <div class="stat-row">
+            <div class="stat-label">${label}:</div>
+            <div class="stat-value">${value}</div>
+            <div class="bar">
+              <div
+                class="fill"
+                style="
+                  width: ${Math.min(value, 255) / 2}%;
+                  background-color: ${statColor(value)};
+                "
+              ></div>
+            </div>
+          </div>
+        `;
+      })
+      .join("");
 
-    const getStatColor = (value, max = 200) => {
-      // Clamp value between 0 and max
-      const clamped = Math.min(Math.max(value, 0), max);
-
-      // Hue range: red (0) → blue (220)
-      const hue = (clamped / max) * 220;
-
-      return `hsl(${hue}, 85%, 50%)`;
-    };
-
-    const statBar = (label, value) => {
-      const color = getStatColor(value, maxStat);
-      const lightColor = `${color}33`; // add transparency for background (33 = 20% opacity)
-
-      return `
-    <div class="stat">
-    <div class="stat-header">
-      <span class="stat-label">${label}:</span>
-      <span class="stat-value">${value}</span>
-    </div>
-    <div class="bar">
-      <div
-        class="fill"
-        style="
-          width: ${(value / maxStat) * 50}%;
-          background-color: ${getStatColor(value, maxStat)};
-        "
-      ></div>
-    </div>
-  </div>
-`;
-    };
-
-    const statsHtml = `
-  <h3>Stats</h3>
-  ${statBar("HP", stats.hp)}
-  ${statBar("Attack", stats.attack)}
-  ${statBar("Defense", stats.defense)}
-  ${statBar("Sp. Attack", stats["special-attack"])}
-  ${statBar("Sp. Defense", stats["special-defense"])}
-  ${statBar("Speed", stats.speed)}
-`;
+    // Render
+    // Render Pokémon card
     result.innerHTML = `
   <div class="pokemon-card">
     <div class="pokemon-image">
-      <img
-        src="${data.sprites.other["official-artwork"].front_default}"
-        alt="${data.name}"
-      />
-
+      <img src="${artwork}" alt="${data.name}" />
     </div>
 
     <div class="pokemon-info">
-  <h2>${data.name}</h2>
+      <h2>${data.name}</h2>
 
-  <p><strong>Pokedex #:</strong> ${data.id}</p>
+      <p><strong>Pokedex #:</strong> ${data.id}</p>
 
-  <p><strong>Species:</strong> ${data.species.name
-    .replace("-", " ")
-    .replace(/\b\w/g, (c) => c.toUpperCase())}</p>
+      <p><strong>Species:</strong> ${data.species.name
+        .replace("-", " ")
+        .replace(/\b\w/g, (c) => c.toUpperCase())}</p>
 
-  <p>
-    <strong>Height:</strong>
-    ${heightMeters.toFixed(1)} m (${feet}' ${inches}")
-  </p>
+      <p>
+        <strong>Height:</strong>
+        ${heightMeters.toFixed(1)} m (${feet}' ${inches}")
+      </p>
 
-  <p>
-    <strong>Weight:</strong>
-    ${weightKg.toFixed(1)} kg (${weightLbs} lbs)
-  </p>
+      <p>
+        <strong>Weight:</strong>
+        ${weightKg.toFixed(1)} kg (${weightLbs} lbs)
+      </p>
 
-  <p><strong>Type:</strong>
-    ${data.types.map((t) => t.type.name.toUpperCase()).join(" / ")}
-  </p>
+      <p><strong>Type:</strong> ${typesHtml}</p>
 
-  <p><strong>Ability:</strong>
-    ${data.abilities
-      .map((a) =>
-        a.ability.name
-          .replace("-", " ")
-          .replace(/\b\w/g, (c) => c.toUpperCase())
-      )
-      .join(", ")}
-  </p>
-</div>
-
+      <p><strong>Ability:</strong> ${abilitiesHtml}</p>
+    </div>
 
     <div class="pokemon-stats">
-      ${statsHtml}
+      ${Object.entries(stats)
+        .map(([label, value]) => {
+          return `
+            <div class="stat-row">
+              <div class="stat-label">${label}:</div>
+              <div class="stat-value">${value}</div>
+              <div class="bar">
+                <div
+                  class="fill"
+                  style="
+                    width: 0%; /* start at 0% for animation */
+                    background-color: ${statColor(value)};
+                  "
+                ></div>
+              </div>
+            </div>
+          `;
+        })
+        .join("")}
+
+      <!-- BST under stats -->
+      <div class="stat-total">
+        <strong>Base Stat Total:</strong> ${statTotal}
+      </div>
     </div>
   </div>
 `;
+    // Animate stat bars
+    const fills = document.querySelectorAll(".pokemon-stats .fill");
+    fills.forEach((fill, i) => {
+      // Get the corresponding stat value
+      const statValue = Object.values(stats)[i];
+      // Animate width after a tiny delay to allow rendering
+      setTimeout(() => {
+        fill.style.width = `${Math.min(statValue, 255) / 2}%`;
+      }, 50); // 50ms delay ensures CSS transition triggers
+    });
   } catch (err) {
-    result.innerHTML = `<p class="error">${err.message}</p>`;
+    result.innerHTML = "<p>Pokémon not found</p>";
   }
 }
-
-button.addEventListener("click", fetchPokemon);
-
-input.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") {
-    fetchPokemon();
-  }
-});
