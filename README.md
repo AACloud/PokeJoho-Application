@@ -14,3 +14,5 @@ This app allows users to search for any Pokémon by name and instantly view its 
 - Animated base stat bars
 - Base Stat Total (BST)
 - Responsive, mobile-friendly layout
+- Dark mode with persistent theme preference
+
