@@ -1,3 +1,4 @@
+/* ===== Dark Mode ===== */
 :root {
   --bg-color: #f5f6fa;
   --text-color: #111;
@@ -67,7 +68,7 @@ h1 {
 
 /* ===== Pokémon Image ===== */
 .pokemon-image img {
-  width: 280px;
+  width: 200px;
   height: auto;
 }
 
@@ -126,15 +127,15 @@ h1 {
 }
 
 .stat-label {
-  width: 140px;
-  font-size: 0.9rem;
+  width: 70px;
+  font-size: 1rem;
   font-weight: 600;
   text-transform: capitalize;
 }
 
 .stat-value {
   width: 40px;
-  font-size: 0.9rem;
+  font-size: 1rem;
   text-align: right;
 }
 
@@ -183,3 +184,64 @@ h1 {
     width: 100%;
   }
 }
+
+/* ===== Sprite Tab ===== */
+.sprite-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.sprite-tab {
+  padding: 6px 12px;
+  font-size: 0.85rem;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  background-color: #e5e7eb;
+}
+
+.sprite-tab.active {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.sprite-tab:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.hidden {
+  display: none;
+}
+
+/* ===== Autocomplete ===== */
+.search-container {
+  position: relative;
+  width: 300px;
+}
+
+.autocomplete-list {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: var(--card-bg, #fff);
+  border: 1px solid #ddd;
+  max-height: 240px;
+  overflow-y: auto;
+  z-index: 10;
+}
+
+.autocomplete-list.hidden {
+  display: none;
+}
+
+.autocomplete-item {
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.autocomplete-item:hover {
+  background-color: rgba(0, 0, 0, 0.08);
+}
+

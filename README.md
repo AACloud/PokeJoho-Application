@@ -1,18 +1,33 @@
 # Poké-Joho
 
-A simple, responsive web app that lets users search for Pokémon and view detailed information using data from the PokéAPI.
+A clean, responsive Pokémon information web app built using **HTML, CSS, JavaScript**, and the **PokéAPI**.  
+Users can search for Pokémon and view detailed stats, sprites, and key information in a modern UI.
 
-## Description
-This app allows users to search for any Pokémon by name and instantly view its official artwork, physical attributes, typing, abilities, and base stats. It is designed to be clean, fast, and mobile-friendly, with animated stat bars for better visualization.
+---
 
-## Features
-- Search Pokémon by name
-- Official Pokémon artwork
-- Pokédex number and species
-- Height and weight (metric and imperial)
-- Pokémon types and abilities (including hidden abilities)
-- Animated base stat bars
-- Base Stat Total (BST)
-- Responsive, mobile-friendly layout
-- Dark mode with persistent theme preference
+## 🚀 Features
+
+- 🔍 Search Pokémon by name
+- 🖼️ Toggle between:
+  - Official Artwork
+  - Modern (3D-style) sprites
+- 📊 Animated stat bars with:
+  - Base stats
+  - Base Stat Total (BST)
+- 🧬 Pokémon information:
+  - Pokédex number
+  - Species
+  - Height (meters & feet/inches)
+  - Weight (kg & lbs)
+  - Type badges
+  - Abilities (hidden abilities labeled)
+- 🌗 Dark mode toggle (saved in localStorage)
+- 📱 Responsive layout (desktop & mobile-friendly)
+
+---
+## 🧠 Data Source
+
+All Pokémon data is fetched from the **PokéAPI**:
+- https://pokeapi.co/
+
 

@@ -1,32 +1,37 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>Poké-Joho</title>
-  <button id="themeToggle">🌙 Dark Mode</button>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <head>
+    <meta charset="UTF-8" />
+    <title>Poké-Joho</title>
+    <button id="themeToggle">🌙 Dark Mode</button>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <!-- Styles -->
-  <link rel="stylesheet" href="style.css" />
-</head>
-<body>
+    <!-- Styles -->
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <h1>Poké-Joho</h1>
 
-  <h1>Poké-Joho</h1>
+    <!-- Search -->
+    <div class="search-container">
+      <input
+        id="pokemonInput"
+        type="text"
+        placeholder="Enter Pokémon name"
+        autocomplete="off"
+      />
+      <div id="autocomplete-list" class="autocomplete-list hidden"></div>
+      <button id="searchBtn">Search</button>
+    </div>
 
-  <!-- Search -->
-  <div class="search">
-    <input
-      id="pokemonInput"
-      type="text"
-      placeholder="Enter Pokémon name"
-    />
-    <button id="searchBtn">Search</button>
-  </div>
+    <!-- Result -->
+    <div id="result"></div>
+    <div class="sprite-tabs hidden">
+      <button class="sprite-tab active" data-sprite="official">Official</button>
+      <button class="sprite-tab" data-sprite="modern">Modern</button>
+    </div>
 
-  <!-- Result -->
-  <div id="result"></div>
-
-  <!-- Script (must be at bottom) -->
-  <script src="script.js"></script>
-</body>
+    <!-- Script (must be at bottom) -->
+    <script src="script.js"></script>
+  </body>
 </html>
