@@ -3,13 +3,16 @@
   <head>
     <meta charset="UTF-8" />
     <title>Poké-Joho</title>
-    <button id="themeToggle">🌙 Dark Mode</button>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
     <!-- Styles -->
     <link rel="stylesheet" href="style.css" />
   </head>
+
   <body>
+    <!-- Theme Toggle -->
+    <button id="themeToggle">🌙 Dark Mode</button>
+
     <h1>Poké-Joho</h1>
 
     <!-- Search -->
@@ -24,14 +27,10 @@
       <button id="searchBtn">Search</button>
     </div>
 
-    <!-- Result -->
+    <!-- Result (JS injects everything here) -->
     <div id="result"></div>
-    <div class="sprite-tabs hidden">
-      <button class="sprite-tab active" data-sprite="official">Official</button>
-      <button class="sprite-tab" data-sprite="modern">Modern</button>
-    </div>
 
-    <!-- Script (must be at bottom) -->
+    <!-- Script -->
     <script src="script.js"></script>
   </body>
 </html>

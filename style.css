@@ -49,8 +49,16 @@ h1 {
   padding: 10px;
   font-size: 1rem;
   width: 220px;
+  color: #111; /* Keep text black */
+  background-color: #fff; /* Optional: keep background white */
+  border: 1px solid #ccc;
+  border-radius: 6px;
 }
-
+body.dark .search input {
+  color: #111; /* Force text black in dark mode */
+  background-color: #f5f5f5; /* Optional: light gray background in dark mode */
+  border: 1px solid #999;
+}
 .search button {
   padding: 10px 16px;
   font-size: 1rem;
@@ -225,12 +233,20 @@ h1 {
   top: 100%;
   left: 0;
   right: 0;
-  background: var(--card-bg, #fff);
+  background: #fff; /* Light background for readability */
   border: 1px solid #ddd;
   max-height: 240px;
   overflow-y: auto;
   z-index: 10;
+  color: #111; /* Always black text */
 }
+
+body.dark .autocomplete-list {
+  background: #f5f5f5; /* Light gray background in dark mode */
+  border: 1px solid #999;
+  color: #111; /* Keep text black */
+}
+
 
 .autocomplete-list.hidden {
   display: none;
@@ -240,8 +256,24 @@ h1 {
   padding: 8px 12px;
   cursor: pointer;
 }
-
 .autocomplete-item:hover {
-  background-color: rgba(0, 0, 0, 0.08);
+  background-color: rgba(0, 0, 0, 0.08); /* subtle hover */
 }
 
+.autocomplete-item:hover {
+  background-color: rgba(0, 0, 0, 0.12); /* slightly darker hover for contrast */
+}
+
+/* ===== Battle Form  ===== */
+.battle-only {
+  opacity: 0.7;
+}
+
+.battle-badge {
+  margin-left: 6px;
+  font-size: 0.7rem;
+  vertical-align: middle;
+}
+.battle-only:hover {
+  opacity: 1;
+}

@@ -1,4 +1,4 @@
-// ===== Pokémon name aliases (forms PokéAPI requires) =====
+// ===== Pokémon name aliases (base forms only) =====
 const pokemonAliases = {
   giratina: "giratina-altered",
   tornadus: "tornadus-incarnate",
@@ -13,8 +13,13 @@ const pokemonAliases = {
   oinkologne: "oinkologne-male",
   meowstic: "meowstic-male",
   zygarde: "zygarde-50",
+  palafin: "palafin-zero",
 };
-
+// ===== Form-specific ability overrides =====
+const formAbilityOverrides = {
+  "zygarde-complete": ["power-construct"],
+  "palafin-hero": ["zero-to-hero"],
+};
 // ===== Type colors =====
 const typeColors = {
   normal: "#A8A77A",
@@ -58,7 +63,7 @@ themeToggle.addEventListener("click", () => {
 });
 
 // ===== Events =====
-searchBtn.addEventListener("click", fetchPokemon);
+searchBtn.addEventListener("click", () => fetchPokemon());
 input.addEventListener("keydown", (e) => {
   if (e.key === "Enter") fetchPokemon();
 });
@@ -69,8 +74,12 @@ let allPokemonNames = [];
 async function preloadPokemonNames() {
   const res = await fetch("https://pokeapi.co/api/v2/pokemon?limit=1300");
   const data = await res.json();
-  allPokemonNames = data.results.map((p) => p.name);
+
+  allPokemonNames = data.results
+    .map((p) => p.name)
+    .filter((name) => !name.includes("-"));
 }
+
 preloadPokemonNames();
 
 input.addEventListener("input", () => {
@@ -95,13 +104,11 @@ input.addEventListener("input", () => {
     const item = document.createElement("div");
     item.className = "autocomplete-item";
     item.textContent = name;
-
     item.addEventListener("click", () => {
       input.value = name;
       autocompleteList.classList.add("hidden");
       fetchPokemon();
     });
-
     autocompleteList.appendChild(item);
   });
 
@@ -109,117 +116,225 @@ input.addEventListener("input", () => {
 });
 
 document.addEventListener("click", (e) => {
-  if (!e.target.closest(".search")) {
+  if (!e.target.closest(".search-container")) {
     autocompleteList.classList.add("hidden");
   }
 });
 
 // ===== Helpers =====
 function statColor(value) {
-  const max = 255;
-  const ratio = Math.min(value / max, 1);
-  const hue = 240 * ratio;
-  return `hsl(${hue}, 80%, 55%)`;
+  const ratio = Math.min(value / 255, 1);
+  return `hsl(${240 * ratio}, 80%, 55%)`;
 }
 
-// ===== Main =====
-async function fetchPokemon() {
+function formatFormName(name) {
+  return name.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+async function getUniqueFormsFromSpecies(speciesData) {
+  const formMap = new Map();
+
+  for (const variety of speciesData.varieties) {
+    const res = await fetch(variety.pokemon.url);
+    const pokemonData = await res.json();
+
+    const form = pokemonData.forms[0];
+
+    // UNIVERSAL normalization
+    let normalizedForm = form.name
+      .replace(/-power-construct$/, "")
+      .replace(/-battle$/, "")
+      .replace(/-amped$/, "")
+      .replace(/-low-key$/, "")
+      .replace(/-hero$/, "")
+      .replace(/-family-of-four$/, "")
+      .replace(/-family-of-three$/, "");
+
+    // Default form name fallback
+    if (normalizedForm === speciesData.name) {
+      normalizedForm = "base";
+    }
+
+    if (!formMap.has(normalizedForm)) {
+      formMap.set(normalizedForm, {
+        label: normalizedForm,
+        pokemonName: pokemonData.name,
+        battleOnly: isBattleOnlyForm(pokemonData),
+      });
+    }
+  }
+
+  return Array.from(formMap.values());
+}
+async function getSpeciesAbilities(speciesData) {
+  const abilityMap = new Map();
+
+  for (const variety of speciesData.varieties) {
+    const res = await fetch(variety.pokemon.url);
+    const pokemon = await res.json();
+
+    pokemon.abilities.forEach((a) => {
+      abilityMap.set(a.ability.name, {
+        name: a.ability.name,
+        is_hidden: a.is_hidden,
+      });
+    });
+  }
+
+  return Array.from(abilityMap.values());
+}
+function isBattleOnlyForm(pokemonData) {
+  // 1️⃣ Explicit PokeAPI flag
+  if (pokemonData.forms[0]?.is_battle_only) return true;
+
+  // 2️⃣ Known battle-state keywords (UNIVERSAL)
+  const battleKeywords = [
+    "hero",
+    "complete",
+    "blade",
+    "school",
+    "noice",
+    "sunny",
+    "zen",
+    "mega",
+    "ultra",
+  ];
+
+  return battleKeywords.some((k) => pokemonData.name.includes(k));
+}
+
+// ===== Fetch & Render =====
+async function fetchPokemon(nameOrForm = null, isForm = false) {
   autocompleteList.classList.add("hidden");
 
-  let name = input.value.toLowerCase().trim().replace(/\s+/g, " ");
+  let name = (nameOrForm || input.value).toLowerCase().trim();
   if (!name) return;
 
-  name = pokemonAliases[name] || name.replace(/\s+/g, "-");
   result.innerHTML = "<p>Loading...</p>";
 
   try {
-    const res = await fetch(`https://pokeapi.co/api/v2/pokemon/${name}`);
-    if (!res.ok) throw new Error("Not found");
-    const data = await res.json();
+    let pokemonData, speciesData;
 
-    const gen =
-      data.id <= 151
-        ? 1
-        : data.id <= 251
-        ? 2
-        : data.id <= 386
-        ? 3
-        : data.id <= 493
-        ? 4
-        : data.id <= 649
-        ? 5
-        : 6;
+    if (isForm) {
+      // 🔹 FORM CLICK → fetch Pokémon directly
+      const pokemonRes = await fetch(
+        `https://pokeapi.co/api/v2/pokemon/${name}`
+      );
+      if (!pokemonRes.ok) throw new Error();
+      pokemonData = await pokemonRes.json();
 
-    const sprites = {
-      official: data.sprites.other["official-artwork"].front_default,
-      modern: data.sprites.other.home.front_default,
-    };
+      const speciesRes = await fetch(pokemonData.species.url);
+      speciesData = await speciesRes.json();
+    } else {
+      // 🔹 SEARCH → resolve base form via species
+      const speciesRes = await fetch(
+        `https://pokeapi.co/api/v2/pokemon-species/${name}`
+      );
+      if (!speciesRes.ok) throw new Error();
+      speciesData = await speciesRes.json();
 
-    const heightMeters = data.height / 10;
-    const feet = Math.floor(heightMeters * 3.28084);
-    const inches = Math.round((heightMeters * 3.28084 - feet) * 12);
+      const defaultVariety = speciesData.varieties.find((v) => v.is_default);
 
-    const weightKg = data.weight / 10;
-    const weightLbs = (weightKg * 2.20462).toFixed(1);
+      const pokemonRes = await fetch(defaultVariety.pokemon.url);
+      pokemonData = await pokemonRes.json();
+    }
 
-    const typesHtml = data.types
-      .map(
-        (t) => `
-        <span class="type-badge" style="background-color: ${
-          typeColors[t.type.name]
-        }">
+    const forms = await getUniqueFormsFromSpecies(speciesData);
+    const abilities = await getSpeciesAbilities(speciesData);
+
+    renderPokemon(pokemonData, speciesData, forms, abilities);
+  } catch {
+    result.innerHTML = "<p>Pokémon not found</p>";
+  }
+}
+
+// ===== Render Pokémon =====
+function renderPokemon(data, speciesData, forms, abilities) {
+  const sprites = {
+    official: data.sprites.other["official-artwork"].front_default,
+    modern: data.sprites.other.home.front_default,
+  };
+
+  const heightMeters = data.height / 10;
+  const feet = Math.floor(heightMeters * 3.28084);
+  const inches = Math.round((heightMeters * 3.28084 - feet) * 12);
+
+  const weightKg = data.weight / 10;
+  const weightLbs = (weightKg * 2.20462).toFixed(1);
+
+  const typesHtml = data.types
+    .map(
+      (t) =>
+        `<span class="type-badge" style="background:${typeColors[t.type.name]}">
           ${t.type.name.toUpperCase()}
         </span>`
-      )
-      .join("");
+    )
+    .join("");
 
-    const abilitiesHtml = data.abilities
-      .map((a) => {
-        const name = a.ability.name
-          .replace("-", " ")
-          .replace(/\b\w/g, (c) => c.toUpperCase());
-        return a.is_hidden
-          ? `${name} <span class="hidden-ability">(Hidden)</span>`
-          : name;
-      })
-      .join(", ");
+  const abilitiesHtml = abilities
+    .map((a) =>
+      a.is_hidden
+        ? `${formatFormName(
+            a.name
+          )} <span class="hidden-ability">(Hidden)</span>`
+        : formatFormName(a.name)
+    )
+    .join(", ");
 
-    const stats = {
-      HP: data.stats[0].base_stat,
-      Attack: data.stats[1].base_stat,
-      Defense: data.stats[2].base_stat,
-      "Sp. Atk": data.stats[3].base_stat,
-      "Sp. Def": data.stats[4].base_stat,
-      Speed: data.stats[5].base_stat,
-    };
+  const stats = {
+    HP: data.stats[0].base_stat,
+    Attack: data.stats[1].base_stat,
+    Defense: data.stats[2].base_stat,
+    "Sp. Atk": data.stats[3].base_stat,
+    "Sp. Def": data.stats[4].base_stat,
+    Speed: data.stats[5].base_stat,
+  };
 
-    const statTotal = Object.values(stats).reduce((a, b) => a + b, 0);
+  const statTotal = Object.values(stats).reduce((a, b) => a + b, 0);
 
-    result.innerHTML = `
+  result.innerHTML = `
 <div class="pokemon-card">
   <div class="pokemon-image">
     <div class="sprite-tabs">
       <button class="sprite-tab active" data-sprite="official">Official</button>
       <button class="sprite-tab" data-sprite="modern">Modern</button>
     </div>
-    <img src="${sprites.official}" alt="${data.name}">
+    <img src="${sprites.official}">
   </div>
 
   <div class="pokemon-info">
-    <h2>${data.name}</h2>
+    <h2>${formatFormName(data.name)}</h2>
     <p><strong>Pokedex #:</strong> ${data.id}</p>
-    <p><strong>Species:</strong> ${data.species.name.replace(
-      "-",
-      " "
-    )}</p>
     <p><strong>Height:</strong> ${heightMeters.toFixed(
       1
     )} m (${feet}' ${inches}")</p>
-    <p><strong>Weight:</strong> ${weightKg.toFixed(
-      1
-    )} kg (${weightLbs} lbs)</p>
+    <p><strong>Weight:</strong> ${weightKg.toFixed(1)} kg (${weightLbs} lbs)</p>
     <p><strong>Type:</strong> ${typesHtml}</p>
     <p><strong>Ability:</strong> ${abilitiesHtml}</p>
+
+    ${
+      forms.length > 1
+        ? `<div class="form-tabs">
+        ${forms
+          .map(
+            (f) => `
+    <button
+      class="form-tab ${f.pokemonName === data.name ? "active" : ""} ${
+              f.battleOnly ? "battle-only" : ""
+            }"
+      data-form="${f.pokemonName}"
+    >
+      ${formatFormName(f.label)}
+      ${f.battleOnly ? `<span class="battle-badge">⚔️</span>` : ""}
+    </button>
+  `
+          )
+          .join("")}
+
+      </div>`
+        : ""
+    }
+
   </div>
 
   <div class="pokemon-stats">
@@ -241,29 +356,28 @@ async function fetchPokemon() {
   </div>
 </div>
 `;
-      
 
-    const tabs = document.querySelectorAll(".sprite-tab");
-    const imageEl = document.querySelector(".pokemon-image img");
-
-    tabs.forEach((tab) => {
-      tab.addEventListener("click", () => {
-        const type = tab.dataset.sprite;
-        tabs.forEach((t) => t.classList.remove("active"));
-        tab.classList.add("active");
-        imageEl.src = sprites[type];
-      });
+  // Sprite switching
+  const imageEl = document.querySelector(".pokemon-image img");
+  document.querySelectorAll(".sprite-tab").forEach((tab) => {
+    tab.addEventListener("click", () => {
+      document
+        .querySelectorAll(".sprite-tab")
+        .forEach((t) => t.classList.remove("active"));
+      tab.classList.add("active");
+      imageEl.src = sprites[tab.dataset.sprite];
     });
+  });
 
-    document.querySelectorAll(".pokemon-stats .fill").forEach((fill, i) => {
-      setTimeout(() => {
-        fill.style.width = `${Math.min(
-          Object.values(stats)[i],
-          255
-        ) / 2}%`;
-      }, 50);
-    });
-  } catch {
-    result.innerHTML = "<p>Pokémon not found</p>";
-  }
+  // Form switching
+  document.querySelectorAll(".form-tab").forEach((tab) => {
+    tab.addEventListener("click", () => fetchPokemon(tab.dataset.form, true));
+  });
+
+  // Animate stats
+  document.querySelectorAll(".fill").forEach((fill, i) => {
+    setTimeout(() => {
+      fill.style.width = `${Math.min(Object.values(stats)[i], 255) / 2}%`;
+    }, 50);
+  });
 }
