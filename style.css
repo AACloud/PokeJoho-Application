@@ -21,6 +21,27 @@ html {
   /* Responsive font scaling */
   font-size: clamp(14px, 2.5vw, 16px);
 }
+/* ===== Top Bar Layout (Title + Search) ===== */
+.top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between; /* title left, search right */
+  padding: 20px 40px;
+}
+
+/* Keep the title centered relative to body width */
+.top-bar h1 {
+  flex: 1;
+  text-align: center;
+  margin: 0;
+}
+
+/* Search Bar stays on the right */
+.search-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
 
 body {
   background-color: var(--bg-color);
@@ -28,7 +49,9 @@ body {
   padding: 40px;
   margin: 0;
   font-size: 1rem;
-  transition: background-color 0.3s ease, color 0.3s ease;
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease;
 }
 
 /* ===== Title ===== */
@@ -69,26 +92,65 @@ body.dark .search input {
 .pokemon-card {
   display: flex;
   align-items: flex-start;
-  gap: 40px;
   max-width: 1100px;
   margin: 60px auto 0;
+  gap: 40px; /* 👈 moves image + info to the right */
+  margin-top: 90px;
 }
 
 /* ===== Pokémon Image ===== */
-.pokemon-image img {
+.pokemon-image {
   width: 200px;
+  height: 200px; /* 👈 reserve space */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin-top: 0px;
+}
+
+.pokemon-image img {
+  width: 350px;
   height: auto;
+  object-fit: contain;
+}
+
+/* ===== Loading ===== */
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 80px;
+  gap: 12px;
+  opacity: 0.8;
+}
+
+.loading-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid rgba(0, 0, 0, 0.2);
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* ===== Pokémon Info ===== */
 .pokemon-info {
-  min-width: 260px;
+  margin-top: 50px;
+  min-width: 300px;
+  margin-right: 100px;
 }
 
 .pokemon-info h2 {
-  margin: 0 0 12px;
+  margin-top: 0;
   text-transform: capitalize;
-  font-size: 1.6rem;
+  font-size: 1.5rem;
 }
 
 .pokemon-info p {
@@ -114,9 +176,75 @@ body.dark .search input {
   font-style: italic;
 }
 
+/* ===== Weakness Chart (Table Layout) ===== */
+.weakness-chart {
+  margin-top: 0px;
+}
+
+.weakness-chart h3 {
+  margin-bottom: 8px;
+  font-size: 1.5rem;
+}
+/* ===== Weakness Table ===== */
+.weakness-table {
+  border-collapse: collapse;
+  border-spacing: 0;
+  table-layout: fixed;
+  margin: 20px auto;
+  width: auto; /* allow table to grow */
+}
+
+/* Each cell */
+.weakness-table td {
+  width: 80px; /* 👈 square size */
+  padding: 0px;
+  text-align: center;
+  vertical-align: top;
+}
+
+/* Type (colored) */
+.type-box {
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+
+  color: white;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 0; /* 🔥 THIS removes the extra vertical gap */
+
+  border: 2px solid #333; /* ⬅ Add outline */
+  box-sizing: border-box;  /* ensures border doesn’t grow the box */
+}
+
+/* Multiplier (white) */
+.type-multiplier {
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: white;
+  color: black;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 700;
+
+  border: 2px solid #333; /* ⬅ Add outline */
+  box-sizing: border-box;
+}
+
 /* ===== Stats Section ===== */
 .pokemon-stats {
-  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 1000px; /* double the width */
+  margin-top: 130px; /* moves the stats block lower */
 }
 
 /* BST */
@@ -129,9 +257,9 @@ body.dark .search input {
 /* ===== Stat Rows ===== */
 .stat-row {
   display: flex;
-  align-items: center;
-  margin-bottom: 12px;
-  gap: 10px;
+  align-items: center; /* vertically center everything */
+  gap: 8px; /* small gap between label, value, and bar */
+  width: 100%;
 }
 
 .stat-label {
@@ -149,17 +277,25 @@ body.dark .search input {
 
 /* ===== Stat Bars ===== */
 .bar {
-  width: 70%;
+  width: 100%;
   height: 24px;
-  border-radius: 999px;
+  border-radius: 4px;
   overflow: hidden;
 }
 
 .fill {
   height: 100%;
   width: 0%;
-  border-radius: 999px;
+  border-radius: 7px; /* slightly rounded corners */
   transition: width 0.6s ease-in-out;
+}
+
+/* ===== Left Column ===== */
+.pokemon-left {
+  margin-top: 70px;
+  width: 360px;
+  min-width: 360px;
+  flex-shrink: 0;
 }
 
 /* ===== Responsive (Mobile) ===== */
@@ -198,6 +334,11 @@ body.dark .search input {
   display: flex;
   gap: 8px;
   margin-bottom: 12px;
+}
+.sprite-controls {
+  display: flex;
+  justify-content: center;
+  /* space between tabs and image */
 }
 
 .sprite-tab {
@@ -247,7 +388,6 @@ body.dark .autocomplete-list {
   color: #111; /* Keep text black */
 }
 
-
 .autocomplete-list.hidden {
   display: none;
 }
@@ -261,7 +401,22 @@ body.dark .autocomplete-list {
 }
 
 .autocomplete-item:hover {
-  background-color: rgba(0, 0, 0, 0.12); /* slightly darker hover for contrast */
+  background-color: rgba(
+    0,
+    0,
+    0,
+    0.12
+  ); /* slightly darker hover for contrast */
+}
+/* ===== Autocomplete Active Item ===== */
+.autocomplete-item.active {
+  background: rgba(0, 0, 0, 0.08);
+  font-weight: 600;
+}
+
+body.dark .autocomplete-item.active {
+  background: #2563eb; /* blue-600 */
+  color: #ffffff;
 }
 
 /* ===== Battle Form  ===== */
@@ -276,4 +431,18 @@ body.dark .autocomplete-list {
 }
 .battle-only:hover {
   opacity: 1;
+}
+/* ===== Shiny Toggle ===== */
+.shiny-toggle {
+  padding: 6px 12px;
+  font-size: 0.85rem;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  background-color: #fde68a;
+}
+
+.shiny-toggle.active {
+  background-color: #f59e0b;
+  color: #111;
 }

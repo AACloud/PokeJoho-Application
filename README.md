@@ -1,6 +1,6 @@
 # 🧭 Poké-Joho
 
-A modern, interactive Pokédex-style web app built with **vanilla HTML, CSS, and JavaScript**, powered by **PokeAPI**. Poké-Joho focuses on accurate Pokémon data, clean UI, and correct handling of Pokémon forms.
+A modern, interactive Pokédex-style web app built with **vanilla HTML, CSS, and JavaScript**, powered by **PokeAPI**. Poké-Joho focuses on accurate Pokémon data, clean UI, correct handling of Pokémon forms, and interactive **type effectiveness charts**.
 
 ---
 
@@ -8,32 +8,37 @@ A modern, interactive Pokédex-style web app built with **vanilla HTML, CSS, and
 
 * 🔍 **Pokémon Search** by name
 
-* 🧠 **Smart Base Form Resolution**
+* 🧠 **Smart Base Form Resolution**  
   Searching a Pokémon name always loads its **official base/default form** using Pokémon *species* data (no hard-coded aliases).
 
-* 🔁 **Form Switching Tabs**
+* 🔁 **Form Switching Tabs**  
   Switch between all available Pokémon forms using tabs. Each form is fetched directly from the Pokémon endpoint for accuracy.
 
-* ⚔️ **Battle-Only Form Indicators**
-  Forms that only appear during battle (e.g. Palafin Hero, Zygarde Complete, Aegislash Blade) are visually marked with a ⚔️ badge.
+* ⚔️ **Battle-Only Form Indicators**  
+  Forms that only appear during battle (e.g., Palafin Hero, Zygarde Complete, Aegislash Blade) are visually marked with a ⚔️ badge.
 
-* 📊 **Animated Base Stat Bars**
+* 📊 **Animated Base Stat Bars**  
   Stats animate smoothly from 0 to their base stat value.
 
-* 🎨 **Type Badges with Accurate Colors**
+* 🎨 **Type Badges with Accurate Colors**  
 
-* 🖼️ **Sprite Switching**
+* 🧩 **Type Matchups Chart**  
+  Displays Pokémon weaknesses and resistances in a **9×4 square grid**:
+  * Type boxes show the first 3 letters of each type in the correct color
+  * Effectiveness numbers below each type with white background
+  * Outlines around each box for clarity
+
+* 🖼️ **Sprite Switching**  
   Toggle between:
-
   * Official artwork
   * Modern HOME-style sprites
 
 * 🌙 **Dark Mode Toggle** (with saved preference)
 
-* ✍️ **Autocomplete Search**
+* ✍️ **Autocomplete Search**  
   Live Pokémon name suggestions while typing.
 
-* 📱 **Responsive Design**
+* 📱 **Responsive Design**  
   Fully usable on desktop and mobile screens.
 
 ---
@@ -50,37 +55,35 @@ When a user searches a Pokémon name:
 
 This ensures correct results for Pokémon like:
 
-* Palafin → Zero Form
-* Deoxys → Normal Form
+* Palafin → Zero Form  
+* Deoxys → Normal Form  
 * Giratina → Altered Form
 
 ### Form Switching
 
-* Clicking a form tab fetches the Pokémon **directly** via `/pokemon/{form-name}`
+* Clicking a form tab fetches the Pokémon **directly** via `/pokemon/{form-name}`  
 * Species data is reused to keep forms grouped correctly
 
 ### Battle-Only Forms
 
 A form is marked as battle-only if:
 
-* `is_battle_only === true` in the API
+* `is_battle_only === true` in the API  
 * OR its name matches known battle-state mechanics (Hero, Complete, Blade, etc.)
-
 
 ---
 
 ## 🛠️ Tech Stack
 
-* **HTML5**
-* **CSS3** (Flexbox, responsive design, dark mode via CSS variables)
-* **Vanilla JavaScript (ES6+)**
-* **PokeAPI** ([https://pokeapi.co](https://pokeapi.co))
-
+* **HTML5**  
+* **CSS3** (Flexbox, responsive design, dark mode via CSS variables)  
+* **Vanilla JavaScript (ES6+)**  
+* **PokeAPI** ([https://pokeapi.co](https://pokeapi.co))  
 
 > No build tools or frameworks required.
 
-
 ---
-##📜 License
+
+## 📜 License
 
 This project is for educational and personal use. Pokémon and Pokémon names are © Nintendo / Game Freak.

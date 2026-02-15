@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -13,18 +13,19 @@
     <!-- Theme Toggle -->
     <button id="themeToggle">🌙 Dark Mode</button>
 
-    <h1>Poké-Joho</h1>
+    <div class="top-bar">
+      <h1>Poké-Joho</h1>
 
-    <!-- Search -->
-    <div class="search-container">
-      <input
-        id="pokemonInput"
-        type="text"
-        placeholder="Enter Pokémon name"
-        autocomplete="off"
-      />
-      <div id="autocomplete-list" class="autocomplete-list hidden"></div>
-      <button id="searchBtn">Search</button>
+      <div class="search-container">
+        <input
+          id="pokemonInput"
+          type="text"
+          placeholder="Enter Pokémon name"
+          autocomplete="off"
+        />
+        <div id="autocomplete-list" class="autocomplete-list hidden"></div>
+        <button id="searchBtn">Search</button>
+      </div>
     </div>
 
     <!-- Result (JS injects everything here) -->

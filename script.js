@@ -1,3 +1,6 @@
+const speciesCache = {};
+let selectedIndex = -1;
+
 // ===== Pokémon name aliases (base forms only) =====
 const pokemonAliases = {
   giratina: "giratina-altered",
@@ -41,6 +44,133 @@ const typeColors = {
   steel: "#B7B7CE",
   fairy: "#D685AD",
 };
+// ===== Type Effectiveness =====
+const typeChart = {
+  normal: { rock: 0.5, ghost: 0, steel: 0.5 },
+  fire: {
+    fire: 0.5,
+    water: 0.5,
+    grass: 2,
+    ice: 2,
+    bug: 2,
+    rock: 0.5,
+    dragon: 0.5,
+    steel: 2,
+  },
+  water: { fire: 2, water: 0.5, grass: 0.5, ground: 2, rock: 2, dragon: 0.5 },
+  electric: {
+    water: 2,
+    electric: 0.5,
+    grass: 0.5,
+    ground: 0,
+    flying: 2,
+    dragon: 0.5,
+  },
+  grass: {
+    fire: 0.5,
+    water: 2,
+    grass: 0.5,
+    poison: 0.5,
+    ground: 2,
+    flying: 0.5,
+    bug: 0.5,
+    rock: 2,
+    dragon: 0.5,
+    steel: 0.5,
+  },
+  ice: {
+    fire: 0.5,
+    water: 0.5,
+    grass: 2,
+    ice: 0.5,
+    ground: 2,
+    flying: 2,
+    dragon: 2,
+    steel: 0.5,
+  },
+  fighting: {
+    normal: 2,
+    ice: 2,
+    rock: 2,
+    dark: 2,
+    steel: 2,
+    poison: 0.5,
+    flying: 0.5,
+    psychic: 0.5,
+    bug: 0.5,
+    fairy: 0.5,
+    ghost: 0,
+  },
+  poison: {
+    grass: 2,
+    fairy: 2,
+    poison: 0.5,
+    ground: 0.5,
+    rock: 0.5,
+    ghost: 0.5,
+    steel: 0,
+  },
+  ground: {
+    fire: 2,
+    electric: 2,
+    grass: 0.5,
+    poison: 2,
+    flying: 0,
+    bug: 0.5,
+    rock: 2,
+    steel: 2,
+  },
+  flying: {
+    electric: 0.5,
+    grass: 2,
+    fighting: 2,
+    bug: 2,
+    rock: 0.5,
+    steel: 0.5,
+  },
+  psychic: { fighting: 2, poison: 2, psychic: 0.5, steel: 0.5, dark: 0 },
+  bug: {
+    fire: 0.5,
+    grass: 2,
+    fighting: 0.5,
+    poison: 0.5,
+    flying: 0.5,
+    psychic: 2,
+    ghost: 0.5,
+    dark: 2,
+    steel: 0.5,
+    fairy: 0.5,
+  },
+  rock: {
+    fire: 2,
+    ice: 2,
+    fighting: 0.5,
+    ground: 0.5,
+    flying: 2,
+    bug: 2,
+    steel: 0.5,
+  },
+  ghost: { normal: 0, psychic: 2, ghost: 2, dark: 0.5 },
+  dragon: { dragon: 2, steel: 0.5, fairy: 0 },
+  dark: { fighting: 0.5, psychic: 2, ghost: 2, dark: 0.5, fairy: 0.5 },
+  steel: {
+    fire: 0.5,
+    water: 0.5,
+    electric: 0.5,
+    ice: 2,
+    rock: 2,
+    steel: 0.5,
+    fairy: 2,
+  },
+  fairy: {
+    fire: 0.5,
+    fighting: 2,
+    poison: 0.5,
+    dragon: 2,
+    dark: 2,
+    steel: 0.5,
+  },
+};
 
 // ===== DOM =====
 const input = document.getElementById("pokemonInput");
@@ -65,19 +195,21 @@ themeToggle.addEventListener("click", () => {
 // ===== Events =====
 searchBtn.addEventListener("click", () => fetchPokemon());
 input.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") fetchPokemon();
+  if (e.key === "Enter" && autocompleteList.classList.contains("hidden")) {
+    fetchPokemon();
+  }
 });
 
 // ===== Autocomplete =====
 let allPokemonNames = [];
 
 async function preloadPokemonNames() {
-  const res = await fetch("https://pokeapi.co/api/v2/pokemon?limit=1300");
+  const res = await fetch(
+    "https://pokeapi.co/api/v2/pokemon-species?limit=1300",
+  );
   const data = await res.json();
 
-  allPokemonNames = data.results
-    .map((p) => p.name)
-    .filter((name) => !name.includes("-"));
+  allPokemonNames = data.results.map((p) => p.name);
 }
 
 preloadPokemonNames();
@@ -85,6 +217,7 @@ preloadPokemonNames();
 input.addEventListener("input", () => {
   const value = input.value.toLowerCase().trim();
   autocompleteList.innerHTML = "";
+  selectedIndex = -1;
 
   if (!value) {
     autocompleteList.classList.add("hidden");
@@ -114,6 +247,46 @@ input.addEventListener("input", () => {
 
   autocompleteList.classList.remove("hidden");
 });
+input.addEventListener("keydown", (e) => {
+  const items = autocompleteList.querySelectorAll(".autocomplete-item");
+
+  if (autocompleteList.classList.contains("hidden") || !items.length) {
+    if (e.key === "Enter") fetchPokemon();
+    return;
+  }
+
+  switch (e.key) {
+    case "ArrowDown":
+      e.preventDefault();
+      selectedIndex = (selectedIndex + 1) % items.length;
+      updateActiveItem(items);
+      break;
+
+    case "ArrowUp":
+      e.preventDefault();
+      selectedIndex = (selectedIndex - 1 + items.length) % items.length;
+      updateActiveItem(items);
+      break;
+
+    case "Enter":
+      e.preventDefault();
+
+      // ✅ If user navigated autocomplete, use selection
+      if (selectedIndex !== -1) {
+        items[selectedIndex].click();
+      } else {
+        // ✅ Otherwise, search exactly what was typed
+        autocompleteList.classList.add("hidden");
+        fetchPokemon();
+      }
+      break;
+
+    case "Escape":
+      autocompleteList.classList.add("hidden");
+      selectedIndex = -1;
+      break;
+  }
+});
 
 document.addEventListener("click", (e) => {
   if (!e.target.closest(".search-container")) {
@@ -122,6 +295,29 @@ document.addEventListener("click", (e) => {
 });
 
 // ===== Helpers =====
+function updateActiveItem(items) {
+  items.forEach((item, i) => {
+    item.classList.toggle("active", i === selectedIndex);
+  });
+
+  items[selectedIndex]?.scrollIntoView({
+    block: "nearest",
+  });
+}
+
+async function getSpeciesData(url) {
+  if (speciesCache[url]) {
+    return speciesCache[url];
+  }
+
+  const res = await fetch(url);
+  if (!res.ok) throw new Error("Failed to fetch species");
+
+  const data = await res.json();
+  speciesCache[url] = data;
+  return data;
+}
+
 function statColor(value) {
   const ratio = Math.min(value / 255, 1);
   return `hsl(${240 * ratio}, 80%, 55%)`;
@@ -130,17 +326,53 @@ function statColor(value) {
 function formatFormName(name) {
   return name.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
+function formatDexNumber(num) {
+  return `${String(num).padStart(4, "0")}`;
+}
+
+function statsAreEqual(a, b) {
+  return a.stats.every((stat, i) => stat.base_stat === b.stats[i].base_stat);
+}
 
 async function getUniqueFormsFromSpecies(speciesData) {
   const formMap = new Map();
+
+  // ✅ Fetch base Pokémon once
+  const baseRes = await fetch(speciesData.varieties[0].pokemon.url);
+  const basePokemon = await baseRes.json();
 
   for (const variety of speciesData.varieties) {
     const res = await fetch(variety.pokemon.url);
     const pokemonData = await res.json();
 
+    const name = pokemonData.name;
     const form = pokemonData.forms[0];
 
-    // UNIVERSAL normalization
+    // ❌ Remove Gmax
+    if (name.includes("gmax")) continue;
+
+    // ❌ Remove outfits / costumes
+    const costumeKeywords = [
+      "cap",
+      "cosplay",
+      "rock-star",
+      "belle",
+      "phd",
+      "libre",
+      "pop-star",
+      "original",
+      "partner",
+      "starter",
+      "world",
+    ];
+    if (costumeKeywords.some((k) => name.includes(k))) continue;
+
+    // ❌ Remove cosmetic stat clones (Minior, Alcremie, etc.)
+    if (statsAreEqual(basePokemon, pokemonData)) {
+      if (pokemonData.id !== basePokemon.id) continue;
+    }
+
+    // ✅ Your normalization logic (kept)
     let normalizedForm = form.name
       .replace(/-power-construct$/, "")
       .replace(/-battle$/, "")
@@ -150,7 +382,6 @@ async function getUniqueFormsFromSpecies(speciesData) {
       .replace(/-family-of-four$/, "")
       .replace(/-family-of-three$/, "");
 
-    // Default form name fallback
     if (normalizedForm === speciesData.name) {
       normalizedForm = "base";
     }
@@ -166,23 +397,60 @@ async function getUniqueFormsFromSpecies(speciesData) {
 
   return Array.from(formMap.values());
 }
-async function getSpeciesAbilities(speciesData) {
+
+function getFormAbilities(pokemonData) {
+  return pokemonData.abilities.map((a) => ({
+    name: a.ability.name,
+    is_hidden: a.is_hidden,
+  }));
+}
+
+async function getAbilitiesForForm(speciesData, targetPokemonName) {
   const abilityMap = new Map();
+
+  // Strip ability-only suffix
+  const baseName = targetPokemonName.replace(/-power-construct$/, "");
 
   for (const variety of speciesData.varieties) {
     const res = await fetch(variety.pokemon.url);
     const pokemon = await res.json();
 
-    pokemon.abilities.forEach((a) => {
-      abilityMap.set(a.ability.name, {
-        name: a.ability.name,
-        is_hidden: a.is_hidden,
-      });
-    });
-  }
+    const name = pokemon.name;
 
+    const matchesBase =
+      name === baseName || name === `${baseName}-power-construct`;
+
+    if (matchesBase) {
+      pokemon.abilities.forEach((a) => {
+        abilityMap.set(a.ability.name, {
+          name: a.ability.name,
+          is_hidden: normalizeAbilityHiddenFlag(
+            pokemon,
+            a.ability.name,
+            a.is_hidden,
+          ),
+        });
+      });
+    }
+  }
   return Array.from(abilityMap.values());
 }
+function normalizeAbilityHiddenFlag(pokemonData, abilityName, isHidden) {
+  // Form-locked abilities are never "hidden" in UI
+  const formLockedKeywords = [
+    "zero-to-hero",
+    "power-construct",
+    "tera-shift",
+    "tera-shell",
+    "embody-aspect",
+  ];
+
+  if (formLockedKeywords.includes(abilityName)) {
+    return false;
+  }
+  return isHidden;
+}
+
 function isBattleOnlyForm(pokemonData) {
   // 1️⃣ Explicit PokeAPI flag
   if (pokemonData.forms[0]?.is_battle_only) return true;
@@ -203,14 +471,104 @@ function isBattleOnlyForm(pokemonData) {
   return battleKeywords.some((k) => pokemonData.name.includes(k));
 }
 
+function formatMultiplier(value) {
+  if (value === 4) return "4";
+  if (value === 2) return "2";
+  if (value === 1) return "1";
+  if (value === 0.5) return "½";
+  if (value === 0.25) return "¼";
+  if (value === 0) return "0";
+}
+
+// Generate Weakness Table
+function generateWeaknessTable(effectiveness) {
+  const types = Object.keys(effectiveness);
+
+  const firstRow = types.slice(0, 9);
+  const secondRow = types.slice(9, 18);
+
+  const renderRow = (rowTypes, isTypeRow = true) =>
+    `<tr>
+      ${rowTypes
+        .map(
+          (type) =>
+            `<td>
+              ${
+                isTypeRow
+                  ? `<div class="type-box" style="background:${typeColors[type]}">${type.slice(0, 3).toUpperCase()}</div>`
+                  : `<div class="type-multiplier">${formatMultiplier(effectiveness[type])}</div>`
+              }
+            </td>`,
+        )
+        .join("")}
+    </tr>`;
+
+  return `
+    <table class="weakness-table">
+      ${renderRow(firstRow, true)}
+      ${renderRow(firstRow, false)}
+      ${renderRow(secondRow, true)}
+      ${renderRow(secondRow, false)}
+    </table>
+  `;
+}
+
+// Type Effectiveness
+async function getTypeEffectiveness(pokemonTypes) {
+  const effectiveness = {};
+
+  // Start every attacking type at neutral
+  Object.keys(typeColors).forEach((type) => {
+    effectiveness[type] = 1;
+  });
+
+  for (const typeInfo of pokemonTypes) {
+    const res = await fetch(typeInfo.type.url);
+    const data = await res.json();
+
+    data.damage_relations.double_damage_from.forEach((t) => {
+      effectiveness[t.name] *= 2;
+    });
+
+    data.damage_relations.half_damage_from.forEach((t) => {
+      effectiveness[t.name] *= 0.5;
+    });
+
+    data.damage_relations.no_damage_from.forEach((t) => {
+      effectiveness[t.name] *= 0;
+    });
+  }
+
+  return effectiveness;
+}
+
+// Form Specific Abilities
+function resolveAbilities(pokemonData, abilities) {
+  const override = formAbilityOverrides[pokemonData.name];
+  if (!override) return abilities;
+
+  return abilities.filter((a) => override.includes(a.name));
+}
+
 // ===== Fetch & Render =====
 async function fetchPokemon(nameOrForm = null, isForm = false) {
   autocompleteList.classList.add("hidden");
 
-  let name = (nameOrForm || input.value).toLowerCase().trim();
+  isShiny = false;
+  activeSprite = "official";
+
+  let name = (nameOrForm || input.value)
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, "-");
   if (!name) return;
 
-  result.innerHTML = "<p>Loading...</p>";
+  result.innerHTML = `
+  <div class="loading">
+    <div class="loading-spinner"></div>
+    <p>Loading Pokémon data…</p>
+  </div>
+`;
 
   try {
     let pokemonData, speciesData;
@@ -218,41 +576,42 @@ async function fetchPokemon(nameOrForm = null, isForm = false) {
     if (isForm) {
       // 🔹 FORM CLICK → fetch Pokémon directly
       const pokemonRes = await fetch(
-        `https://pokeapi.co/api/v2/pokemon/${name}`
+        `https://pokeapi.co/api/v2/pokemon/${name}`,
       );
       if (!pokemonRes.ok) throw new Error();
       pokemonData = await pokemonRes.json();
 
-      const speciesRes = await fetch(pokemonData.species.url);
-      speciesData = await speciesRes.json();
+      speciesData = await getSpeciesData(pokemonData.species.url);
     } else {
       // 🔹 SEARCH → resolve base form via species
-      const speciesRes = await fetch(
-        `https://pokeapi.co/api/v2/pokemon-species/${name}`
+      speciesData = await getSpeciesData(
+        "https://pokeapi.co/api/v2/pokemon-species/" + name,
       );
-      if (!speciesRes.ok) throw new Error();
-      speciesData = await speciesRes.json();
 
       const defaultVariety = speciesData.varieties.find((v) => v.is_default);
+      if (!defaultVariety) throw new Error();
 
       const pokemonRes = await fetch(defaultVariety.pokemon.url);
       pokemonData = await pokemonRes.json();
     }
 
     const forms = await getUniqueFormsFromSpecies(speciesData);
-    const abilities = await getSpeciesAbilities(speciesData);
+    const abilities = await getAbilitiesForForm(speciesData, pokemonData.name);
 
     renderPokemon(pokemonData, speciesData, forms, abilities);
   } catch {
     result.innerHTML = "<p>Pokémon not found</p>";
   }
 }
-
+let isShiny = false;
+let activeSprite = "Official"; // Keeps track of Official vs Modern
 // ===== Render Pokémon =====
-function renderPokemon(data, speciesData, forms, abilities) {
+async function renderPokemon(data, speciesData, forms, abilities) {
   const sprites = {
     official: data.sprites.other["official-artwork"].front_default,
+    officialShiny: data.sprites.other["official-artwork"].front_shiny,
     modern: data.sprites.other.home.front_default,
+    modernShiny: data.sprites.other.home.front_shiny,
   };
 
   const heightMeters = data.height / 10;
@@ -267,17 +626,21 @@ function renderPokemon(data, speciesData, forms, abilities) {
       (t) =>
         `<span class="type-badge" style="background:${typeColors[t.type.name]}">
           ${t.type.name.toUpperCase()}
-        </span>`
+        </span>`,
     )
     .join("");
+
+  const pokemonTypes = data.types.map((t) => t.type.name);
+  const effectiveness = await getTypeEffectiveness(data.types);
+  const weaknessHtml = generateWeaknessTable(effectiveness);
 
   const abilitiesHtml = abilities
     .map((a) =>
       a.is_hidden
         ? `${formatFormName(
-            a.name
+            a.name,
           )} <span class="hidden-ability">(Hidden)</span>`
-        : formatFormName(a.name)
+        : formatFormName(a.name),
     )
     .join(", ");
 
@@ -294,20 +657,47 @@ function renderPokemon(data, speciesData, forms, abilities) {
 
   result.innerHTML = `
 <div class="pokemon-card">
-  <div class="pokemon-image">
+
+  <!-- LEFT COLUMN -->
+  <div class="pokemon-left">
+    <div class="pokemon-image">
+  <div class="sprite-controls">
     <div class="sprite-tabs">
       <button class="sprite-tab active" data-sprite="official">Official</button>
       <button class="sprite-tab" data-sprite="modern">Modern</button>
+      <button class="shiny-toggle">✨ Shiny</button>
     </div>
-    <img src="${sprites.official}">
   </div>
 
+  <img src="${isShiny ? sprites.officialShiny : sprites.official}">
+</div>
+
+
+    <div class="pokemon-stats">
+      ${Object.entries(stats)
+        .map(
+          ([label, value]) => `
+        <div class="stat-row">
+          <div class="stat-label">${label}</div>
+          <div class="stat-value">${value}</div>
+          <div class="bar">
+            <div
+              class="fill"
+              style="width:${(value / 255) * 70}%; background:${statColor(value)}"
+              ></div>
+          </div>
+        </div>`,
+        )
+        .join("")}
+      <div class="stat-total"><strong>Total:</strong> ${statTotal}</div>
+    </div>
+  </div>
+
+ <!-- INFO COLUMN -->
   <div class="pokemon-info">
     <h2>${formatFormName(data.name)}</h2>
-    <p><strong>Pokedex #:</strong> ${data.id}</p>
-    <p><strong>Height:</strong> ${heightMeters.toFixed(
-      1
-    )} m (${feet}' ${inches}")</p>
+    <p><strong>Pokedex Number:</strong> ${formatDexNumber(speciesData.id)}</p>
+    <p><strong>Height:</strong> ${heightMeters.toFixed(1)} m (${feet}' ${inches}")</p>
     <p><strong>Weight:</strong> ${weightKg.toFixed(1)} kg (${weightLbs} lbs)</p>
     <p><strong>Type:</strong> ${typesHtml}</p>
     <p><strong>Ability:</strong> ${abilitiesHtml}</p>
@@ -315,69 +705,82 @@ function renderPokemon(data, speciesData, forms, abilities) {
     ${
       forms.length > 1
         ? `<div class="form-tabs">
-        ${forms
-          .map(
-            (f) => `
-    <button
-      class="form-tab ${f.pokemonName === data.name ? "active" : ""} ${
-              f.battleOnly ? "battle-only" : ""
-            }"
-      data-form="${f.pokemonName}"
-    >
-      ${formatFormName(f.label)}
-      ${f.battleOnly ? `<span class="battle-badge">⚔️</span>` : ""}
-    </button>
-  `
-          )
-          .join("")}
-
-      </div>`
+          ${forms
+            .map(
+              (f) => `
+            <button
+              class="form-tab ${f.pokemonName === data.name ? "active" : ""} ${
+                f.battleOnly ? "battle-only" : ""
+              }"
+              data-form="${f.pokemonName}"
+            >
+              ${formatFormName(f.label)}
+              ${f.battleOnly ? `<span class="battle-badge">⚔️</span>` : ""}
+            </button>`,
+            )
+            .join("")}
+        </div>`
         : ""
     }
-
   </div>
 
-  <div class="pokemon-stats">
-    ${Object.entries(stats)
-      .map(
-        ([label, value]) => `
-      <div class="stat-row">
-        <div class="stat-label">${label}</div>
-        <div class="stat-value">${value}</div>
-        <div class="bar">
-          <div class="fill" style="width:0%;background:${statColor(
-            value
-          )}"></div>
-        </div>
-      </div>`
-      )
-      .join("")}
-    <div class="stat-total"><strong>Total:</strong> ${statTotal}</div>
+  <!-- WEAKNESS COLUMN -->
+  <div class="weakness-chart">
+    <h3>Type Matchups</h3>
+    <div class="weakness-grid">
+      ${weaknessHtml}
+    </div>
   </div>
+
 </div>
 `;
 
+  // Stat Row
+  requestAnimationFrame(() => {
+    document.querySelectorAll(".stat-row").forEach((row) => {
+      const label = row.querySelector(".stat-label").textContent;
+      const value = stats[label];
+      const fill = row.querySelector(".fill");
+
+      fill.style.width = `${barWidth}px`;
+    });
+  });
+
   // Sprite switching
   const imageEl = document.querySelector(".pokemon-image img");
+
   document.querySelectorAll(".sprite-tab").forEach((tab) => {
     tab.addEventListener("click", () => {
       document
         .querySelectorAll(".sprite-tab")
         .forEach((t) => t.classList.remove("active"));
+
       tab.classList.add("active");
-      imageEl.src = sprites[tab.dataset.sprite];
+      activeSprite = tab.dataset.sprite;
+
+      imageEl.src = isShiny
+        ? sprites[`${activeSprite}Shiny`]
+        : sprites[activeSprite];
     });
+  });
+  // Shiny Toggle Logic
+  const shinyBtn = document.querySelector(".shiny-toggle");
+  // ✅ Ensure shiny toggle starts OFF
+  shinyBtn.classList.remove("active");
+
+  shinyBtn.addEventListener("click", () => {
+    isShiny = !isShiny;
+    shinyBtn.classList.toggle("active", isShiny);
+
+    imageEl.src = isShiny
+      ? sprites[`${activeSprite}Shiny`]
+      : sprites[activeSprite];
   });
 
   // Form switching
-  document.querySelectorAll(".form-tab").forEach((tab) => {
-    tab.addEventListener("click", () => fetchPokemon(tab.dataset.form, true));
-  });
-
-  // Animate stats
-  document.querySelectorAll(".fill").forEach((fill, i) => {
-    setTimeout(() => {
-      fill.style.width = `${Math.min(Object.values(stats)[i], 255) / 2}%`;
-    }, 50);
-  });
+  if (forms.length > 1) {
+    document.querySelectorAll(".form-tab").forEach((tab) => {
+      tab.addEventListener("click", () => fetchPokemon(tab.dataset.form, true));
+    });
+  }
 }
