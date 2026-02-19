@@ -1,4 +1,7 @@
 const speciesCache = {};
+const typeCache = {};
+const pokemonCache = {};
+
 let selectedIndex = -1;
 
 // ===== Pokémon name aliases (base forms only) =====
@@ -171,6 +174,28 @@ const typeChart = {
     steel: 0.5,
   },
 };
+// ===== Ability Immunity =====
+const abilityImmunities = {
+  "lightning-rod": ["electric"],
+  "motor-drive": ["electric"],
+  "volt-absorb": ["electric"],
+
+  "flash-fire": ["fire"],
+
+  "water-absorb": ["water"],
+  "storm-drain": ["water"],
+  "dry-skin": ["water"],
+
+  levitate: ["ground"],
+
+  "sap-sipper": ["grass"],
+
+  "well-baked-body": ["fire"],
+
+  "earth-eater": ["ground"],
+
+  "wind-rider": ["flying"],
+};
 
 // ===== DOM =====
 const input = document.getElementById("pokemonInput");
@@ -213,6 +238,15 @@ async function preloadPokemonNames() {
 }
 
 preloadPokemonNames();
+async function preloadAllTypes() {
+  const types = Object.keys(typeColors);
+
+  await Promise.all(types.map((type) => getTypeData(type)));
+
+  console.log("✅ All types preloaded");
+}
+
+preloadAllTypes();
 
 input.addEventListener("input", () => {
   const value = input.value.toLowerCase().trim();
@@ -295,6 +329,42 @@ document.addEventListener("click", (e) => {
 });
 
 // ===== Helpers =====
+
+// ===== Cached Fetch Pokemon =====
+async function getPokemonData(urlOrName) {
+  const key = urlOrName;
+
+  if (pokemonCache[key]) {
+    return pokemonCache[key];
+  }
+
+  const res = await fetch(
+    urlOrName.startsWith("http")
+      ? urlOrName
+      : `https://pokeapi.co/api/v2/pokemon/${urlOrName}`,
+  );
+
+  if (!res.ok) throw new Error("Failed to fetch Pokémon");
+
+  const data = await res.json();
+  pokemonCache[key] = data;
+
+  return data;
+}
+
+// ===== Cached Fetch Function =====
+async function getTypeData(typeName) {
+  if (typeCache[typeName]) {
+    return typeCache[typeName]; // ✅ already fetched
+  }
+
+  const res = await fetch(`https://pokeapi.co/api/v2/type/${typeName}`);
+  const data = await res.json();
+
+  typeCache[typeName] = data; // ✅ store in cache
+  return data;
+}
+
 function updateActiveItem(items) {
   items.forEach((item, i) => {
     item.classList.toggle("active", i === selectedIndex);
@@ -338,15 +408,16 @@ async function getUniqueFormsFromSpecies(speciesData) {
   const formMap = new Map();
 
   // ✅ Fetch base Pokémon once
-  const baseRes = await fetch(speciesData.varieties[0].pokemon.url);
-  const basePokemon = await baseRes.json();
+  const basePokemon = await getPokemonData(
+    speciesData.varieties[0].pokemon.url,
+  );
 
   for (const variety of speciesData.varieties) {
-    const res = await fetch(variety.pokemon.url);
-    const pokemonData = await res.json();
+    const pokemonData = await getPokemonData(variety.pokemon.url);
 
     const name = pokemonData.name;
-    const form = pokemonData.forms[0];
+
+    // Use the variety name as the form source
 
     // ❌ Remove Gmax
     if (name.includes("gmax")) continue;
@@ -367,13 +438,24 @@ async function getUniqueFormsFromSpecies(speciesData) {
     ];
     if (costumeKeywords.some((k) => name.includes(k))) continue;
 
-    // ❌ Remove cosmetic stat clones (Minior, Alcremie, etc.)
-    if (statsAreEqual(basePokemon, pokemonData)) {
+    // ❌ Remove cosmetic clones ONLY if everything is identical
+    const sameStats = statsAreEqual(basePokemon, pokemonData);
+
+    const sameTypes =
+      JSON.stringify(basePokemon.types) === JSON.stringify(pokemonData.types);
+
+    const sameAbilities =
+      JSON.stringify(basePokemon.abilities) ===
+      JSON.stringify(pokemonData.abilities);
+
+    if (sameStats && sameTypes && sameAbilities) {
       if (pokemonData.id !== basePokemon.id) continue;
     }
 
     // ✅ Your normalization logic (kept)
-    let normalizedForm = form.name
+    let normalizedForm = name
+      .replace(speciesData.name, "") // remove "ogerpon"
+      .replace(/^[-]/, "") // remove leading dash
       .replace(/-power-construct$/, "")
       .replace(/-battle$/, "")
       .replace(/-amped$/, "")
@@ -382,9 +464,7 @@ async function getUniqueFormsFromSpecies(speciesData) {
       .replace(/-family-of-four$/, "")
       .replace(/-family-of-three$/, "");
 
-    if (normalizedForm === speciesData.name) {
-      normalizedForm = "base";
-    }
+    if (!normalizedForm) normalizedForm = "base";
 
     if (!formMap.has(normalizedForm)) {
       formMap.set(normalizedForm, {
@@ -406,35 +486,25 @@ function getFormAbilities(pokemonData) {
 }
 
 async function getAbilitiesForForm(speciesData, targetPokemonName) {
-  const abilityMap = new Map();
-
-  // Strip ability-only suffix
-  const baseName = targetPokemonName.replace(/-power-construct$/, "");
-
   for (const variety of speciesData.varieties) {
     const res = await fetch(variety.pokemon.url);
     const pokemon = await res.json();
 
-    const name = pokemon.name;
-
-    const matchesBase =
-      name === baseName || name === `${baseName}-power-construct`;
-
-    if (matchesBase) {
-      pokemon.abilities.forEach((a) => {
-        abilityMap.set(a.ability.name, {
-          name: a.ability.name,
-          is_hidden: normalizeAbilityHiddenFlag(
-            pokemon,
-            a.ability.name,
-            a.is_hidden,
-          ),
-        });
-      });
+    if (pokemon.name === targetPokemonName) {
+      return pokemon.abilities.map((a) => ({
+        name: a.ability.name,
+        is_hidden: normalizeAbilityHiddenFlag(
+          pokemon,
+          a.ability.name,
+          a.is_hidden,
+        ),
+      }));
     }
   }
-  return Array.from(abilityMap.values());
+
+  return [];
 }
+
 function normalizeAbilityHiddenFlag(pokemonData, abilityName, isHidden) {
   // Form-locked abilities are never "hidden" in UI
   const formLockedKeywords = [
@@ -517,14 +587,14 @@ function generateWeaknessTable(effectiveness) {
 async function getTypeEffectiveness(pokemonTypes) {
   const effectiveness = {};
 
-  // Start every attacking type at neutral
   Object.keys(typeColors).forEach((type) => {
     effectiveness[type] = 1;
   });
 
   for (const typeInfo of pokemonTypes) {
-    const res = await fetch(typeInfo.type.url);
-    const data = await res.json();
+    const typeName = typeInfo.type.name;
+
+    const data = await getTypeData(typeName);
 
     data.damage_relations.double_damage_from.forEach((t) => {
       effectiveness[t.name] *= 2;
@@ -540,6 +610,22 @@ async function getTypeEffectiveness(pokemonTypes) {
   }
 
   return effectiveness;
+}
+
+// ===== Ability Immunity =====
+function applyAbilityImmunities(effectiveness, abilities) {
+  const modified = { ...effectiveness };
+
+  abilities.forEach((a) => {
+    const immuneTypes = abilityImmunities[a.name];
+    if (immuneTypes) {
+      immuneTypes.forEach((type) => {
+        modified[type] = 0;
+      });
+    }
+  });
+
+  return modified;
 }
 
 // Form Specific Abilities
@@ -574,25 +660,19 @@ async function fetchPokemon(nameOrForm = null, isForm = false) {
     let pokemonData, speciesData;
 
     if (isForm) {
-      // 🔹 FORM CLICK → fetch Pokémon directly
-      const pokemonRes = await fetch(
-        `https://pokeapi.co/api/v2/pokemon/${name}`,
-      );
-      if (!pokemonRes.ok) throw new Error();
-      pokemonData = await pokemonRes.json();
-
+      pokemonData = await getPokemonData(name);
       speciesData = await getSpeciesData(pokemonData.species.url);
     } else {
-      // 🔹 SEARCH → resolve base form via species
       speciesData = await getSpeciesData(
         "https://pokeapi.co/api/v2/pokemon-species/" + name,
       );
 
-      const defaultVariety = speciesData.varieties.find((v) => v.is_default);
-      if (!defaultVariety) throw new Error();
+      await Promise.all(
+        speciesData.varieties.map((v) => getPokemonData(v.pokemon.name)),
+      );
 
-      const pokemonRes = await fetch(defaultVariety.pokemon.url);
-      pokemonData = await pokemonRes.json();
+      const defaultVariety = speciesData.varieties.find((v) => v.is_default);
+      pokemonData = await getPokemonData(defaultVariety.pokemon.url);
     }
 
     const forms = await getUniqueFormsFromSpecies(speciesData);
@@ -604,8 +684,24 @@ async function fetchPokemon(nameOrForm = null, isForm = false) {
   }
 }
 let isShiny = false;
-let activeSprite = "Official"; // Keeps track of Official vs Modern
+let activeSprite = "official"; // Keeps track of Official vs Modern
 // ===== Render Pokémon =====
+function renderFromCache(pokemonData, speciesData) {
+  const pokemon = {
+    id: pokemonData.id,
+    name: pokemonData.name,
+    types: pokemonData.types.map((t) => t.type.name),
+    stats: pokemonData.stats,
+    abilities: pokemonData.abilities,
+    sprites: {
+      official: pokemonData.sprites.other["official-artwork"].front_default,
+      modern: pokemonData.sprites.other.home.front_default,
+    },
+  };
+
+  renderPokemon(pokemon, speciesData);
+}
+
 async function renderPokemon(data, speciesData, forms, abilities) {
   const sprites = {
     official: data.sprites.other["official-artwork"].front_default,
@@ -632,9 +728,41 @@ async function renderPokemon(data, speciesData, forms, abilities) {
 
   const pokemonTypes = data.types.map((t) => t.type.name);
   const effectiveness = await getTypeEffectiveness(data.types);
+  const abilityEffectiveness = applyAbilityImmunities(effectiveness, abilities);
   const weaknessHtml = generateWeaknessTable(effectiveness);
 
-  const abilitiesHtml = abilities
+  const finalAbilities = resolveAbilities(data, abilities);
+
+  const immunityAbilities = finalAbilities.filter(
+    (a) => abilityImmunities[a.name],
+  );
+
+  const hasImmunityAbility = immunityAbilities.length > 0;
+  const hasNonImmunityAbility =
+    finalAbilities.length > immunityAbilities.length;
+
+  // Build matchup modes (base + ability variants)
+  const matchupModes = [
+    {
+      label: "Base",
+      effectiveness: effectiveness,
+      mode: "base",
+    },
+  ];
+
+  finalAbilities.forEach((ability) => {
+    const immuneTypes = abilityImmunities[ability.name];
+
+    if (immuneTypes) {
+      matchupModes.push({
+        label: formatFormName(ability.name),
+        effectiveness: applyAbilityImmunities(effectiveness, [ability]),
+        mode: ability.name,
+      });
+    }
+  });
+
+  const abilitiesHtml = finalAbilities
     .map((a) =>
       a.is_hidden
         ? `${formatFormName(
@@ -654,6 +782,8 @@ async function renderPokemon(data, speciesData, forms, abilities) {
   };
 
   const statTotal = Object.values(stats).reduce((a, b) => a + b, 0);
+
+  const immunityAbility = finalAbilities.find((a) => abilityImmunities[a.name]);
 
   result.innerHTML = `
 <div class="pokemon-card">
@@ -723,17 +853,73 @@ async function renderPokemon(data, speciesData, forms, abilities) {
         : ""
     }
   </div>
-
   <!-- WEAKNESS COLUMN -->
-  <div class="weakness-chart">
-    <h3>Type Matchups</h3>
-    <div class="weakness-grid">
-      ${weaknessHtml}
-    </div>
+<div class="weakness-chart">
+  <h3>Type Matchups</h3>
+
+  <div class="matchup-tabs">
+    ${
+      hasImmunityAbility && hasNonImmunityAbility
+        ? `
+        <button
+          class="matchup-tab active"
+          data-mode="base"
+        >
+          Base
+        </button>
+        `
+        : ""
+    }
+    ${immunityAbilities
+      .map(
+        (ability, i) => `
+          <button
+            class="matchup-tab ${
+              !hasNonImmunityAbility && i === 0 ? "active" : ""
+            }"
+            data-mode="${ability.name}"
+          >
+            ${formatFormName(ability.name)}
+          </button>
+        `,
+      )
+      .join("")}
   </div>
+
+  <div id="matchupTable"></div>
+</div>
+</div>
+
 
 </div>
 `;
+
+  // Matchup tab switching
+  const matchupTabs = document.querySelectorAll(".matchup-tab");
+  // Show BASE matchup table by default on load
+  const matchupTable = document.getElementById("matchupTable");
+
+  // Default Chart Logic
+  if (!hasNonImmunityAbility && hasImmunityAbility) {
+    // Only immunity abilities exist → show first ability table
+    matchupTable.innerHTML = generateWeaknessTable(
+      applyAbilityImmunities(effectiveness, [immunityAbilities[0]]),
+    );
+  } else {
+    // Normal case → show base
+    matchupTable.innerHTML = generateWeaknessTable(effectiveness);
+  }
+
+  matchupTabs.forEach((tab) => {
+    tab.addEventListener("click", () => {
+      matchupTabs.forEach((t) => t.classList.remove("active"));
+      tab.classList.add("active");
+
+      const selected = matchupModes.find((m) => m.mode === tab.dataset.mode);
+
+      matchupTable.innerHTML = generateWeaknessTable(selected.effectiveness);
+    });
+  });
 
   // Stat Row
   requestAnimationFrame(() => {
@@ -742,7 +928,7 @@ async function renderPokemon(data, speciesData, forms, abilities) {
       const value = stats[label];
       const fill = row.querySelector(".fill");
 
-      fill.style.width = `${barWidth}px`;
+      fill.style.width = `${(value / 255) * 70}%`;
     });
   });
 
@@ -777,10 +963,28 @@ async function renderPokemon(data, speciesData, forms, abilities) {
       : sprites[activeSprite];
   });
 
-  // Form switching
+  // Form switching (CACHE ONLY ⚡)
   if (forms.length > 1) {
     document.querySelectorAll(".form-tab").forEach((tab) => {
-      tab.addEventListener("click", () => fetchPokemon(tab.dataset.form, true));
+      tab.addEventListener("click", async () => {
+        const formName = tab.dataset.form;
+
+        const cachedPokemon = pokemonCache[formName];
+
+        if (!cachedPokemon) {
+          console.warn("Form not in cache:", formName);
+          return;
+        }
+
+        const speciesData = await getSpeciesData(cachedPokemon.species.url);
+
+        const abilities = await getAbilitiesForForm(
+          speciesData,
+          cachedPokemon.name,
+        );
+
+        renderPokemon(cachedPokemon, speciesData, forms, abilities);
+      });
     });
   }
 }

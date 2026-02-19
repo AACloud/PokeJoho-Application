@@ -237,6 +237,23 @@ body.dark .search input {
   border: 2px solid #333; /* ⬅ Add outline */
   box-sizing: border-box;
 }
+/* Matchups -> Ability Immunity */
+.matchup-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.matchup-tab {
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.matchup-tab.active {
+  background: #444;
+  color: white;
+}
 
 /* ===== Stats Section ===== */
 .pokemon-stats {
