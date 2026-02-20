@@ -203,6 +203,15 @@ const result = document.getElementById("result");
 const searchBtn = document.getElementById("searchBtn");
 const themeToggle = document.getElementById("themeToggle");
 const autocompleteList = document.getElementById("autocomplete-list");
+const homeTitle = document.getElementById("homeTitle");
+
+if (homeTitle) {
+  homeTitle.addEventListener("click", () => {
+    result.innerHTML = "";
+    input.value = "";
+    input.focus();
+  });
+}
 
 // ===== Dark mode =====
 if (localStorage.getItem("theme") === "dark") {

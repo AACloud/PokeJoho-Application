@@ -1,3 +1,12 @@
+/* ===== Title ===== */
+.site-title {
+  cursor: pointer;
+}
+
+.site-title:hover h1 {
+  opacity: 0.85;
+}
+
 /* ===== Dark Mode ===== */
 :root {
   --bg-color: #f5f6fa;
@@ -10,6 +19,21 @@ body.dark {
   --text-color: #e5e7eb;
   --card-text: #e5e7eb;
 }
+
+#homeTitle {
+  cursor: pointer;
+}
+/* ===== Cursor  ===== */
+#homeTitle {
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+#homeTitle:hover {
+  opacity: 0.8;
+}
+
+
 /* ===== Section Divider ===== */
 .section-divider {
   border: none;
