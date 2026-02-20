@@ -10,6 +10,74 @@ body.dark {
   --text-color: #e5e7eb;
   --card-text: #e5e7eb;
 }
+/* ===== Section Divider ===== */
+.section-divider {
+  border: none;
+  height: 2px;
+  background: linear-gradient(to right, transparent, #ccc, transparent);
+  margin: 20px 0 30px;
+  transition: all 0.3s ease;
+}
+
+/* 🌙 Dark mode glow */
+body.dark .section-divider {
+  background: linear-gradient(to right, transparent, #5aa9ff, transparent);
+  box-shadow: 0 0 8px rgba(90, 169, 255, 0.6);
+}
+.divider-wrapper {
+  position: relative;
+}
+
+/* Pokéball in the center */
+.pokeball-divider {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 22px;
+  height: 22px;
+  background: linear-gradient(to bottom, #ff3b3b 50%, white 50%);
+  border: 2px solid black;
+  border-radius: 50%;
+  z-index: 2;
+}
+
+/* middle line of pokeball */
+.pokeball-divider::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: black;
+  transform: translateY(-50%);
+}
+
+/* center button */
+.pokeball-divider::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 8px;
+  height: 8px;
+  background: white;
+  border: 2px solid black;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+body.dark .pokeball-divider {
+  border-color: #ddd;
+}
+
+body.dark .pokeball-divider::before {
+  background: #ddd;
+}
+
+body.dark .pokeball-divider::after {
+  border-color: #ddd;
+}
 
 /* ===== Global ===== */
 * {
@@ -24,7 +92,7 @@ html {
 /* ===== Top Bar Layout (Title + Search) ===== */
 .top-bar {
   display: flex;
-  align-items: center;
+  align-items: stretch;
   justify-content: space-between; /* title left, search right */
   padding: 20px 40px;
 }
@@ -217,7 +285,7 @@ body.dark .search input {
   line-height: 0; /* 🔥 THIS removes the extra vertical gap */
 
   border: 2px solid #333; /* ⬅ Add outline */
-  box-sizing: border-box;  /* ensures border doesn’t grow the box */
+  box-sizing: border-box; /* ensures border doesn’t grow the box */
 }
 
 /* Multiplier (white) */
