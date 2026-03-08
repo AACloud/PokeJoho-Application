@@ -1,1 +1,31 @@
-node_modules
+# ========================
+# OS generated files
+# ========================
+.DS_Store
+Thumbs.db
+
+# ========================
+# Logs
+# ========================
+*.log
+
+# ========================
+# Environment variables
+# ========================
+.env
+
+# ========================
+# Node dependencies (only if npm is added later)
+# ========================
+node_modules/
+
+# ========================
+# VS Code local settings
+# ========================
+.vscode/settings.json
+
+# ========================
+# Temporary files
+# ========================
+*.tmp
+*.temp

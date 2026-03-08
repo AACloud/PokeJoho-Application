@@ -3,11 +3,39 @@
   <head>
     <meta charset="UTF-8" />
     <title>Poké-Joho</title>
-    <h1 id="homeTitle">Poké-Joho</h1>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
+    <!-- Favicons -->
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="32x32"
+      href="assets/icons/favicon-32.png"
+    />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="16x16"
+      href="assets/icons/favicon-16.png"
+    />
+
+    <!-- iOS -->
+    <link
+      rel="apple-touch-icon"
+      sizes="180x180"
+      href="assets/icons/favicon-180.png"
+    />
+
+    <!-- Android / PWA -->
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="512x512"
+      href="assets/icons/favicon-512.png"
+    />
+
     <!-- Styles -->
-    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="css/style.css" />
   </head>
 
   <body>
@@ -15,11 +43,21 @@
     <button id="themeToggle">🌙 Dark Mode</button>
 
     <div class="top-bar">
-      <div class="divider-wrapper">
-        <hr class="section-divider" />
-        <div class="pokeball-divider"></div>
-      </div>
-      
+      <!-- Title centered -->
+      <h1 id="homeTitle">
+        <!-- Light mode -->
+        <img
+          src="assets/images/logo-light.png"
+          srcset="
+            assets/images/Poke-Joho.png    1x,
+            assets/images/Poke-Joho@2x.png 2x
+          "
+          alt="Poké-Joho"
+          class="title-logo"
+        />
+      </h1>
+
+      <!-- Search on the right -->
       <div class="search-container">
         <input
           id="pokemonInput"
@@ -31,11 +69,17 @@
         <button id="searchBtn">Search</button>
       </div>
     </div>
-    <hr class="section-divider" />
+
+    <!-- Divider with Pokéball -->
+    <div class="divider-wrapper">
+      <hr class="section-divider" />
+      <div class="pokeball-divider"></div>
+    </div>
+
     <!-- Result (JS injects everything here) -->
     <div id="result"></div>
 
-    <!-- Script -->
-    <script src="script.js"></script>
+    <!-- Script (keep at bottom) -->
+    <script src="js/script.js"></script>
   </body>
 </html>

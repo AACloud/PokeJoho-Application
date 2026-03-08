@@ -1,4 +1,9 @@
 /* ===== Title ===== */
+.title-logo {
+  height: 70px; /* adjust as needed */
+  width: auto;
+  display: block;
+}
 .site-title {
   cursor: pointer;
 }
@@ -33,13 +38,19 @@ body.dark {
   opacity: 0.8;
 }
 
+#appTitle:hover {
+  opacity: 0.85;
+}
 
 /* ===== Section Divider ===== */
 .section-divider {
+  width: 100%;
   border: none;
   height: 2px;
-  background: linear-gradient(to right, transparent, #ccc, transparent);
-  margin: 20px 0 30px;
+  margin-top: 10px;
+  margin-bottom: 25px;
+
+  background: linear-gradient(to right, transparent, #000, transparent);
   transition: all 0.3s ease;
 }
 
@@ -48,59 +59,10 @@ body.dark .section-divider {
   background: linear-gradient(to right, transparent, #5aa9ff, transparent);
   box-shadow: 0 0 8px rgba(90, 169, 255, 0.6);
 }
+
 .divider-wrapper {
-  position: relative;
-}
-
-/* Pokéball in the center */
-.pokeball-divider {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  width: 22px;
-  height: 22px;
-  background: linear-gradient(to bottom, #ff3b3b 50%, white 50%);
-  border: 2px solid black;
-  border-radius: 50%;
-  z-index: 2;
-}
-
-/* middle line of pokeball */
-.pokeball-divider::before {
-  content: "";
-  position: absolute;
-  top: 50%;
-  left: 0;
   width: 100%;
-  height: 2px;
-  background: black;
-  transform: translateY(-50%);
-}
-
-/* center button */
-.pokeball-divider::after {
-  content: "";
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 8px;
-  height: 8px;
-  background: white;
-  border: 2px solid black;
-  border-radius: 50%;
-  transform: translate(-50%, -50%);
-}
-body.dark .pokeball-divider {
-  border-color: #ddd;
-}
-
-body.dark .pokeball-divider::before {
-  background: #ddd;
-}
-
-body.dark .pokeball-divider::after {
-  border-color: #ddd;
+  position: relative;
 }
 
 /* ===== Global ===== */
@@ -116,20 +78,24 @@ html {
 /* ===== Top Bar Layout (Title + Search) ===== */
 .top-bar {
   display: flex;
-  align-items: stretch;
-  justify-content: space-between; /* title left, search right */
+  align-items: center; /* keeps search and title vertically aligned */
   padding: 20px 40px;
 }
 
-/* Keep the title centered relative to body width */
-.top-bar h1 {
-  flex: 1;
-  text-align: center;
+/* Title centered horizontally on the page */
+#homeTitle {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  top: 50px; /* adjust vertical position as needed */
   margin: 0;
+  cursor: pointer;
+  text-align: center;
 }
 
-/* Search Bar stays on the right */
+/* Search pushed to the right */
 .search-container {
+  margin-left: auto; /* pushes it to far right */
   display: flex;
   align-items: center;
   gap: 10px;
@@ -260,6 +226,33 @@ body.dark .search input {
   font-size: 0.8rem;
   font-weight: 600;
   text-transform: capitalize;
+}
+/* ===== Ability ===== */
+.ability-link {
+  color: #4da6ff;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.ability-link:hover {
+  text-decoration: underline;
+}
+.ability-page {
+  max-width: 700px;
+  margin: auto;
+  padding: 20px;
+}
+
+.back-home {
+  display: inline-block;
+  margin-bottom: 20px;
+  text-decoration: none;
+  font-weight: bold;
+  color: #4da6ff;
+}
+
+.back-home:hover {
+  text-decoration: underline;
 }
 
 .hidden-ability {
@@ -410,9 +403,39 @@ body.dark .search input {
 /* ===== Responsive (Mobile) ===== */
 @media (max-width: 768px) {
   body {
-    padding: 20px;
+    padding: 16px;
   }
 
+  /* Stack top bar */
+  .top-bar {
+    flex-direction: column;
+    align-items: center;
+    padding: 10px 0;
+    gap: 16px;
+  }
+
+  /* Remove absolute positioning on mobile */
+  #homeTitle {
+    position: static;
+    transform: none;
+    margin: 0;
+    text-align: center;
+  }
+
+  /* Full width search */
+  .search-container {
+    width: 100%;
+    max-width: 100%;
+    margin-left: 0;
+  }
+
+  .search-container input {
+    flex: 1;
+    width: 100%;
+    font-size: 16px;
+  }
+
+  /* Stack card vertically */
   .pokemon-card {
     flex-direction: column;
     align-items: center;
@@ -420,24 +443,69 @@ body.dark .search input {
     margin-top: 40px;
   }
 
-  .pokemon-image img {
-    width: 220px;
+  /* LEFT COLUMN (image + tabs container) */
+  .pokemon-left {
+    width: 100%;
+    min-width: 0;
+    margin-top: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* 🔥 centers everything */
   }
 
-  .pokemon-info,
-  .pokemon-stats {
+  /* Center sprite tabs */
+  .sprite-tabs {
+    justify-content: center;
     width: 100%;
   }
 
+  /* Center sprite controls */
+  .sprite-controls {
+    justify-content: center;
+    width: 100%;
+  }
+
+  /* Center image */
+  .pokemon-image {
+    align-items: center;
+    justify-content: center;
+  }
+
+  .pokemon-image img {
+    width: 220px;
+    max-width: 100%;
+    display: block;
+    margin: 0 auto;
+  }
+
+  /* Info + stats full width */
+  .pokemon-info,
+  .pokemon-stats {
+    width: 100%;
+    margin-right: 0;
+  }
+
+  .pokemon-stats {
+    margin-top: 40px;
+  }
+
   .stat-label {
-    width: 110px;
+    width: 80px;
   }
 
   .bar {
     width: 100%;
   }
-}
 
+  /* Prevent table overflow */
+  .weakness-table {
+    width: 100%;
+  }
+
+  .weakness-table td {
+    width: auto;
+  }
+}
 /* ===== Sprite Tab ===== */
 .sprite-tabs {
   display: flex;

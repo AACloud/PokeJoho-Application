@@ -4,96 +4,196 @@ A modern, interactive Pokédex-style web app built with **vanilla HTML, CSS, and
 
 ---
 
-## ✨ Features
+# ✨ Features
 
-* 🔍 **Pokémon Search** by name
+### 🔍 Pokémon Search
 
-* 🧠 **Smart Base Form Resolution**  
-  Searching a Pokémon name always loads its **official base/default form** using Pokémon *species* data (no hard-coded aliases).
-
-* 🔁 **Form Switching Tabs**  
-  Switch between all available Pokémon forms using tabs. Each form is fetched directly from the Pokémon endpoint for accuracy.
-
-* ⚔️ **Battle-Only Form Indicators**  
-  Forms that only appear during battle (e.g. Palafin Hero, Zygarde Complete, Aegislash Blade) are visually marked with a ⚔️ badge.
-
-* 📊 **Animated Base Stat Bars**  
-  Stats animate smoothly from 0 to their base stat value.
-
-* 🎨 **Type Badges with Accurate Colors**
-
-* 🖼️ **Sprite Switching**
-  Toggle between:
-  * Official artwork
-  * Modern HOME-style sprites
-  * Shiny sprites
-
-* 🧬 **Ability-Based Type Matchups**
-  * Automatically detects abilities that grant **type immunities**
-  * Generates **separate effectiveness tables per ability**
-  * Tabs are labeled with the **actual ability name**
-  * Base tab is hidden when redundant
-  * Ability tabs are hidden if no matchup-changing abilities exist
-  * Correct matchup table is shown automatically on search
-
-* 📋 **Full Type Effectiveness Table**
-  * Displays all 18 types
-  * Shows:
-    * `4×`, `2×`, `1×`, `½×`, `¼×`, `0×`
-  * Color-coded type boxes
-  * Optimized square grid layout
-
-* 🌙 **Dark Mode Toggle** (with saved preference)
-
-* ✍️ **Autocomplete Search**  
-  Live Pokémon name suggestions while typing.
-
-* 📱 **Responsive Design**  
-  Fully usable on desktop and mobile screens.
+Search any Pokémon by name using a fast, autocomplete-powered search bar.
 
 ---
 
-## 🧩 How Form Handling Works (Important)
+### 🧠 Smart Base Form Resolution
 
-### Base Form Resolution
+Searching a Pokémon name always loads its **official base/default form** using Pokémon _species_ data.
 
-When a user searches a Pokémon name:
+The app:
 
-1. The app fetches `/pokemon-species/{name}`
+1. Fetches `/pokemon-species/{name}`
 2. Finds the variety where `is_default === true`
 3. Loads that Pokémon as the base form
 
 This ensures correct results for Pokémon like:
 
-* Palafin → Zero Form  
-* Deoxys → Normal Form  
-* Giratina → Altered Form  
+- Palafin → Zero Form
+- Deoxys → Normal Form
+- Giratina → Altered Form
+
+No hard-coded aliases are required.
 
 ---
 
-### Form Switching
+### 🔁 Form Switching Tabs
 
-* Clicking a form tab fetches the Pokémon **directly** via `/pokemon/{form-name}`
-* Species data is reused to keep forms grouped correctly
-* Preloaded and cached for **instant switching**
+Switch between all available Pokémon forms using tabs.
 
----
-
-### Battle-Only Forms
-
-A form is marked as battle-only if:
-
-* `is_battle_only === true` in the API  
-**OR**
-* Its name matches known battle-state mechanics (Hero, Complete, Blade, etc.)
+- Each form is fetched directly from `/pokemon/{form-name}`
+- Species data keeps forms grouped correctly
+- Forms are **preloaded and cached** for instant switching
 
 ---
 
-## ⚔️ Type Matchup System
+### ⚔️ Battle-Only Form Indicators
 
-### Base Matchups
+Forms that only appear during battle are visually marked with a **⚔️ badge**.
 
-Calculated using the Pokémon’s **combined defensive typing**.
+Examples include:
+
+- Palafin Hero
+- Zygarde Complete
+- Aegislash Blade
+
+---
+
+### 📊 Animated Base Stat Bars
+
+Pokémon base stats animate smoothly from **0 → their base stat value**.
+
+---
+
+### 🎨 Type Badges with Accurate Colors
+
+Each Pokémon type is displayed with its **official color scheme**.
+
+---
+
+### 🖼️ Sprite Switching
+
+Toggle between different Pokémon artwork styles:
+
+- Official artwork
+- Pokémon HOME-style sprites
+- Shiny sprites
+
+---
+
+### 🧬 Ability System
+
+Poké-Joho includes **clickable abilities with detailed ability pages**.
+
+Abilities displayed on the Pokémon card are clickable and open a dedicated page with additional information.
+
+Ability pages include:
+
+- 📜 **Ability effect description**
+- 🧬 **Generation introduced**
+- 🐾 **List of Pokémon that have the ability**
+
+This information is fetched directly from the **PokeAPI ability endpoint**.
+
+---
+
+### ⚔️ Ability-Based Type Matchups
+
+Poké-Joho automatically detects abilities that grant **type immunities** and generates separate matchup tables.
+
+Examples:
+
+- Lightning Rod → Electric immunity
+- Flash Fire → Fire immunity
+- Water Absorb → Water immunity
+
+The system:
+
+- Creates **separate effectiveness tables per ability**
+- Labels tabs with the **actual ability name**
+- Hides the base tab when redundant
+- Automatically displays the correct matchup table after search
+
+---
+
+### 📋 Full Type Effectiveness Table
+
+Displays all **18 Pokémon types** in a grid.
+
+Shows:
+
+- `4×`
+- `2×`
+- `1×`
+- `½×`
+- `¼×`
+- `0×`
+
+Features:
+
+- Color-coded type boxes
+- Square grid layout
+- Clear multiplier display
+
+---
+
+### 🌙 Dark Mode
+
+Toggle between **light and dark themes**.
+
+The user’s preference is saved using **localStorage**, so the selected theme persists across sessions.
+
+---
+
+### ✍️ Autocomplete Search
+
+Live Pokémon name suggestions appear while typing in the search bar.
+
+---
+
+### 📱 Responsive Design
+
+The interface works smoothly across:
+
+- Desktop
+- Tablets
+- Mobile devices
+
+---
+
+# 🧩 Form Handling System
+
+## Base Form Resolution
+
+When a Pokémon is searched:
+
+1. `/pokemon-species/{name}` is fetched
+2. The variety where `is_default === true` is identified
+3. That Pokémon is loaded as the base form
+
+This guarantees correct behavior for Pokémon with multiple forms.
+
+---
+
+## Form Switching
+
+When a form tab is clicked:
+
+- The form is fetched directly using `/pokemon/{form-name}`
+- Previously loaded forms are cached for faster switching
+
+---
+
+## Battle-Only Forms
+
+A form is flagged as battle-only if:
+
+- `is_battle_only === true` in the API
+  OR
+- Its name matches known battle mechanics (Hero, Complete, Blade, etc.)
+
+---
+
+# ⚔️ Type Matchup System
+
+## Base Matchups
+
+Type matchups are calculated using the Pokémon’s **combined defensive typing**.
 
 Example:
 
@@ -101,56 +201,71 @@ Garchomp → Ice shows **4×**, not `2× + 2×`.
 
 ---
 
-### Ability Matchups
+## Ability Matchups
 
-If a Pokémon has an ability that grants an immunity:
+If a Pokémon has an ability that grants a type immunity, Poké-Joho:
 
-Example abilities:
+1. Detects the ability
+2. Applies the immunity to the type chart
+3. Creates a separate matchup mode
 
-* Lightning Rod → Electric immunity
-* Flash Fire → Fire immunity
-* Water Absorb → Water immunity
+Example:
 
-The app:
-
-* Creates a **separate matchup mode**
-* Applies the immunity to the type chart
-* Lets the user switch between them via tabs
+Lightning Rod → Electric attacks become **0×** instead of normal damage.
 
 ---
 
-### Smart Tab Logic
+## Smart Tab Logic
 
-| Situation | Result |
-|-----------|--------|
-No immunity abilities | No tabs shown |
-Only immunity abilities | Only ability tabs shown |
-Mixed abilities | Base + ability tabs |
+| Situation               | Result                  |
+| ----------------------- | ----------------------- |
+| No immunity abilities   | No tabs shown           |
+| Only immunity abilities | Only ability tabs shown |
+| Mixed abilities         | Base + ability tabs     |
 
-The chart **always remains visible**.
-
----
-
-## 🚀 Performance Optimizations
-
-* ⚡ Type data is **preloaded and cached**
-* ⚡ Pokémon data is **cached for instant form switching**
-* ⚡ No redundant API calls
+The type chart **always remains visible**.
 
 ---
 
-## 🛠️ Tech Stack
+# 🚀 Performance Optimizations
 
-* **HTML5**
-* **CSS3** (Flexbox, responsive design, dark mode via CSS variables)
-* **Vanilla JavaScript (ES6+)**
-* **PokeAPI** → https://pokeapi.co
+Poké-Joho includes several optimizations:
 
-> No build tools or frameworks required.
+- ⚡ Type data is **preloaded and cached**
+- ⚡ Pokémon data is **cached for instant form switching**
+- ⚡ Ability data is loaded only when needed
+- ⚡ No redundant API calls
 
 ---
 
-## 📜 License
+# 🛠️ Tech Stack
 
-This project is for educational and personal use.  
+- **HTML5**
+- **CSS3**
+  - Flexbox
+  - Responsive design
+  - CSS variables for dark mode
+
+- **Vanilla JavaScript (ES6+)**
+- **PokeAPI**
+
+https://pokeapi.co
+
+No frameworks or build tools are required.
+
+---
+
+# 🧹 Code Quality
+
+Poké-Joho uses modern tooling for consistent code formatting:
+
+- **ESLint** – JavaScript linting
+- **Prettier** – automatic code formatting
+
+---
+
+# 📜 License
+
+This project is for **educational and personal use**.
+
 Pokémon and Pokémon names are © Nintendo / Game Freak.

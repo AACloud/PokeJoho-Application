@@ -196,6 +196,18 @@ const abilityImmunities = {
 
   "wind-rider": ["flying"],
 };
+// ===== Debounce =====
+function debounce(fn, delay = 300) {
+  let timer;
+
+  return function (...args) {
+    clearTimeout(timer);
+
+    timer = setTimeout(() => {
+      fn.apply(this, args);
+    }, delay);
+  };
+}
 
 // ===== DOM =====
 const input = document.getElementById("pokemonInput");
@@ -204,13 +216,17 @@ const searchBtn = document.getElementById("searchBtn");
 const themeToggle = document.getElementById("themeToggle");
 const autocompleteList = document.getElementById("autocomplete-list");
 const homeTitle = document.getElementById("homeTitle");
-
 if (homeTitle) {
   homeTitle.addEventListener("click", () => {
     result.innerHTML = "";
     input.value = "";
     input.focus();
   });
+}
+
+const appTitle = document.getElementById("appTitle");
+if (appTitle) {
+  appTitle.addEventListener("click", goHome);
 }
 
 // ===== Dark mode =====
@@ -239,7 +255,7 @@ let allPokemonNames = [];
 
 async function preloadPokemonNames() {
   const res = await fetch(
-    "https://pokeapi.co/api/v2/pokemon-species?limit=1300",
+    "https://pokeapi.co/api/v2/pokemon-species?limit=1300"
   );
   const data = await res.json();
 
@@ -257,7 +273,8 @@ async function preloadAllTypes() {
 
 preloadAllTypes();
 
-input.addEventListener("input", () => {
+function handleAutocomplete() {
+  console.log("Autocomplete triggered");
   const value = input.value.toLowerCase().trim();
   autocompleteList.innerHTML = "";
   selectedIndex = -1;
@@ -289,7 +306,10 @@ input.addEventListener("input", () => {
   });
 
   autocompleteList.classList.remove("hidden");
-});
+}
+
+input.addEventListener("input", debounce(handleAutocomplete, 250));
+
 input.addEventListener("keydown", (e) => {
   const items = autocompleteList.querySelectorAll(".autocomplete-item");
 
@@ -339,6 +359,31 @@ document.addEventListener("click", (e) => {
 
 // ===== Helpers =====
 
+// Single Page Application Home Reset
+function goHome() {
+  // 🔄 Reset global UI state
+  isShiny = false;
+  activeSprite = "official";
+  selectedIndex = -1;
+
+  // 🧹 Clear rendered Pokémon
+  result.innerHTML = "";
+
+  // 🔍 Reset search
+  input.value = "";
+  input.focus();
+
+  // ❌ Hide autocomplete
+  autocompleteList.classList.add("hidden");
+  autocompleteList.innerHTML = "";
+
+  // 🔝 Scroll to top
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth",
+  });
+}
+
 // ===== Cached Fetch Pokemon =====
 async function getPokemonData(urlOrName) {
   const key = urlOrName;
@@ -350,7 +395,7 @@ async function getPokemonData(urlOrName) {
   const res = await fetch(
     urlOrName.startsWith("http")
       ? urlOrName
-      : `https://pokeapi.co/api/v2/pokemon/${urlOrName}`,
+      : `https://pokeapi.co/api/v2/pokemon/${urlOrName}`
   );
 
   if (!res.ok) throw new Error("Failed to fetch Pokémon");
@@ -418,7 +463,7 @@ async function getUniqueFormsFromSpecies(speciesData) {
 
   // ✅ Fetch base Pokémon once
   const basePokemon = await getPokemonData(
-    speciesData.varieties[0].pokemon.url,
+    speciesData.varieties[0].pokemon.url
   );
 
   for (const variety of speciesData.varieties) {
@@ -505,7 +550,7 @@ async function getAbilitiesForForm(speciesData, targetPokemonName) {
         is_hidden: normalizeAbilityHiddenFlag(
           pokemon,
           a.ability.name,
-          a.is_hidden,
+          a.is_hidden
         ),
       }));
     }
@@ -577,7 +622,7 @@ function generateWeaknessTable(effectiveness) {
                   ? `<div class="type-box" style="background:${typeColors[type]}">${type.slice(0, 3).toUpperCase()}</div>`
                   : `<div class="type-multiplier">${formatMultiplier(effectiveness[type])}</div>`
               }
-            </td>`,
+            </td>`
         )
         .join("")}
     </tr>`;
@@ -673,11 +718,11 @@ async function fetchPokemon(nameOrForm = null, isForm = false) {
       speciesData = await getSpeciesData(pokemonData.species.url);
     } else {
       speciesData = await getSpeciesData(
-        "https://pokeapi.co/api/v2/pokemon-species/" + name,
+        "https://pokeapi.co/api/v2/pokemon-species/" + name
       );
 
       await Promise.all(
-        speciesData.varieties.map((v) => getPokemonData(v.pokemon.name)),
+        speciesData.varieties.map((v) => getPokemonData(v.pokemon.name))
       );
 
       const defaultVariety = speciesData.varieties.find((v) => v.is_default);
@@ -731,7 +776,7 @@ async function renderPokemon(data, speciesData, forms, abilities) {
       (t) =>
         `<span class="type-badge" style="background:${typeColors[t.type.name]}">
           ${t.type.name.toUpperCase()}
-        </span>`,
+        </span>`
     )
     .join("");
 
@@ -743,7 +788,7 @@ async function renderPokemon(data, speciesData, forms, abilities) {
   const finalAbilities = resolveAbilities(data, abilities);
 
   const immunityAbilities = finalAbilities.filter(
-    (a) => abilityImmunities[a.name],
+    (a) => abilityImmunities[a.name]
   );
 
   const hasImmunityAbility = immunityAbilities.length > 0;
@@ -772,13 +817,15 @@ async function renderPokemon(data, speciesData, forms, abilities) {
   });
 
   const abilitiesHtml = finalAbilities
-    .map((a) =>
-      a.is_hidden
-        ? `${formatFormName(
-            a.name,
-          )} <span class="hidden-ability">(Hidden)</span>`
-        : formatFormName(a.name),
-    )
+    .map((a) => {
+      const abilityLink = `<a class="ability-link" href="ability.html?ability=${a.name}">
+      ${formatFormName(a.name)}
+    </a>`;
+
+      return a.is_hidden
+        ? `${abilityLink} <span class="hidden-ability">(Hidden)</span>`
+        : abilityLink;
+    })
     .join(", ");
 
   const stats = {
@@ -825,7 +872,7 @@ async function renderPokemon(data, speciesData, forms, abilities) {
               style="width:${(value / 255) * 70}%; background:${statColor(value)}"
               ></div>
           </div>
-        </div>`,
+        </div>`
         )
         .join("")}
       <div class="stat-total"><strong>Total:</strong> ${statTotal}</div>
@@ -855,7 +902,7 @@ async function renderPokemon(data, speciesData, forms, abilities) {
             >
               ${formatFormName(f.label)}
               ${f.battleOnly ? `<span class="battle-badge">⚔️</span>` : ""}
-            </button>`,
+            </button>`
             )
             .join("")}
         </div>`
@@ -890,7 +937,7 @@ async function renderPokemon(data, speciesData, forms, abilities) {
           >
             ${formatFormName(ability.name)}
           </button>
-        `,
+        `
       )
       .join("")}
   </div>
@@ -912,7 +959,7 @@ async function renderPokemon(data, speciesData, forms, abilities) {
   if (!hasNonImmunityAbility && hasImmunityAbility) {
     // Only immunity abilities exist → show first ability table
     matchupTable.innerHTML = generateWeaknessTable(
-      applyAbilityImmunities(effectiveness, [immunityAbilities[0]]),
+      applyAbilityImmunities(effectiveness, [immunityAbilities[0]])
     );
   } else {
     // Normal case → show base
@@ -989,7 +1036,7 @@ async function renderPokemon(data, speciesData, forms, abilities) {
 
         const abilities = await getAbilitiesForForm(
           speciesData,
-          cachedPokemon.name,
+          cachedPokemon.name
         );
 
         renderPokemon(cachedPokemon, speciesData, forms, abilities);
