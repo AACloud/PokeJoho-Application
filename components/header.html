@@ -1,0 +1,70 @@
+<div class="site-header">
+  <div class="top-bar">
+    <div class="header-actions">
+      <button id="themeToggle">🌙 Dark Mode</button>
+
+      <a href="/pokedex/national" class="header-btn"> National Pokédex </a>
+    </div>
+
+    <h1 id="homeTitle" class="site-title">
+      <img
+        src="/assets/images/logo-light.png"
+        srcset="
+          /assets/images/Poke-Joho.png    1x,
+          /assets/images/Poke-Joho@2x.png 2x
+        "
+        alt="Poké-Joho"
+        class="title-logo"
+      />
+    </h1>
+
+    <div class="search-container">
+      <input
+        id="pokemonInput"
+        type="text"
+        placeholder="Enter Pokémon name"
+        autocomplete="off"
+      />
+      <div id="autocomplete-list" class="autocomplete-list hidden"></div>
+      <button id="searchBtn">Search</button>
+    </div>
+  </div>
+
+  <div class="divider-wrapper">
+    <hr class="section-divider" />
+    <div class="pokeball-divider"></div>
+  </div>
+  <nav class="main-nav">
+    <div class="nav-item">
+      <button class="nav-button">Pokemon</button>
+      <div class="dropdown-menu">
+        <a href="/">Home</a>
+        <a href="/pokedex/national">All Pokémon</a>
+      </div>
+    </div>
+
+    <div class="nav-item">
+      <button class="nav-button">Pokedex</button>
+      <div class="dropdown-menu">
+        <a href="/pokedex/national">National Pokédex</a>
+      </div>
+    </div>
+
+    <div class="nav-item">
+      <button class="nav-button">Mechanics</button>
+      <div class="dropdown-menu">
+        <a href="#">Abilities</a>
+        <a href="#">Types</a>
+        <a href="#">Forms</a>
+      </div>
+    </div>
+
+    <div class="nav-item">
+      <button class="nav-button">Settings</button>
+      <div class="dropdown-menu">
+        <a href="#">Dark Mode</a>
+        <a href="#">Preferences</a>
+      </div>
+    </div>
+  </nav>
+</div>

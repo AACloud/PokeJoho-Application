@@ -1,0 +1,25 @@
+{
+  "name": "pokejoho",
+  "version": "1.0.0",
+  "description": "A modern, interactive Pokédex-style web app built with **vanilla HTML, CSS, and JavaScript**, powered by **PokeAPI**. Poké-Joho focuses on accurate Pokémon data, clean UI, correct handling of Pokémon forms, and advanced type matchup logic.",
+  "main": "index.js",
+  "scripts": {
+    "sass": "sass scss/style.scss css/style.css --no-source-map --style=expanded",
+    "sass:watch": "sass --watch scss/style.scss:css/style.css"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AACloud/PokeJoho-Application.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/AACloud/PokeJoho-Application/issues"
+  },
+  "homepage": "https://github.com/AACloud/PokeJoho-Application#readme",
+  "dependencies": {
+    "express": "^5.2.1"
+  }
+}
