@@ -3,14 +3,34 @@
   <head>
     <meta charset="UTF-8" />
     <title>Ability Info</title>
-    <link rel="stylesheet" href="style.css" />
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="/css/style.css" />
   </head>
 
   <body>
-    <a href="index.html">⬅ Back to Poké-Joho</a>
-    <h1 id="abilityName"></h1>
-    <p id="abilityDescription"></p>
+    <div id="header-placeholder"></div>
 
-    <script src="ability.js"></script>
+    <h1 id="abilityName">Loading...</h1>
+    <p id="abilityDescription">Fetching ability details...</p>
+
+    <h2>Pokémon with this Ability</h2>
+
+    <table class="ability-table">
+      <thead>
+        <tr>
+          <th>Pokédex No</th>
+          <th>Image</th>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Other Abilities</th>
+        </tr>
+      </thead>
+      <tbody id="pokemonWithAbility"></tbody>
+    </table>
+
+    <script type="module" src="/js/loadHeader.js"></script>
+    <script src="/js/script.js"></script>
+    <script type="module" src="/js/ability.js"></script>
   </body>
 </html>

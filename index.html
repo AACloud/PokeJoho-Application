@@ -3,6 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <title>Poké-Joho</title>
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
     <!-- Favicons -->
@@ -18,15 +19,11 @@
       sizes="16x16"
       href="assets/icons/favicon-16.png"
     />
-
-    <!-- iOS -->
     <link
       rel="apple-touch-icon"
       sizes="180x180"
       href="assets/icons/favicon-180.png"
     />
-
-    <!-- Android / PWA -->
     <link
       rel="icon"
       type="image/png"
@@ -34,52 +31,16 @@
       href="assets/icons/favicon-512.png"
     />
 
-    <!-- Styles -->
-    <link rel="stylesheet" href="css/style.css" />
+    <!-- CSS -->
+    <link rel="stylesheet" href="/css/style.css" />
   </head>
 
   <body>
-    <!-- Theme Toggle -->
-    <button id="themeToggle">🌙 Dark Mode</button>
+    <div id="header-placeholder"></div>
 
-    <div class="top-bar">
-      <!-- Title centered -->
-      <h1 id="homeTitle">
-        <!-- Light mode -->
-        <img
-          src="assets/images/logo-light.png"
-          srcset="
-            assets/images/Poke-Joho.png    1x,
-            assets/images/Poke-Joho@2x.png 2x
-          "
-          alt="Poké-Joho"
-          class="title-logo"
-        />
-      </h1>
-
-      <!-- Search on the right -->
-      <div class="search-container">
-        <input
-          id="pokemonInput"
-          type="text"
-          placeholder="Enter Pokémon name"
-          autocomplete="off"
-        />
-        <div id="autocomplete-list" class="autocomplete-list hidden"></div>
-        <button id="searchBtn">Search</button>
-      </div>
-    </div>
-
-    <!-- Divider with Pokéball -->
-    <div class="divider-wrapper">
-      <hr class="section-divider" />
-      <div class="pokeball-divider"></div>
-    </div>
-
-    <!-- Result (JS injects everything here) -->
     <div id="result"></div>
 
-    <!-- Script (keep at bottom) -->
-    <script src="js/script.js"></script>
+    <script type="module" src="/js/loadHeader.js"></script>
+    <script src="/js/script.js"></script>
   </body>
 </html>
